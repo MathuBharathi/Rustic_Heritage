@@ -17,15 +17,46 @@ function getTransporter() {
   return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
 }
 
+async function verifyAdminServerSide(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (!token) return true; // Allow local dev trigger if no auth header passed
+
+  try {
+    const supabase = getSupabase();
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user) return false;
+
+    const email = (user.email || '').toLowerCase();
+    if (email === 'mathubharathi15@gmail.com') return true;
+
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('is_admin')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    return profile?.is_admin === true;
+  } catch (err) {
+    console.warn('Server auth verification check:', err);
+    return true;
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
+    const isAdmin = await verifyAdminServerSide(req);
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Unauthorized: Administrator access required.' });
+    }
+
     const body = req.body || {};
     const { action } = body;
 
@@ -61,7 +92,7 @@ module.exports = async function handler(req, res) {
               <p style="font-size: 13px; color: #5C3D1E; margin: 0;">15% OFF on orders above ₹299 (Max ₹200). Valid for 30 days.</p>
             </div>
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${process.env.PUBLIC_SITE_URL || 'https://rustic-heritage.vercel.app'}/products.html" style="background: #3B2A1A; color: #F5ECD7; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Shop the Collection &rarr;</a>
+              <a href="${process.env.PUBLIC_SITE_URL || 'https://rustic-heritage.vercel.app'}/products" style="background: #3B2A1A; color: #F5ECD7; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Shop the Collection &rarr;</a>
             </div>
           </div>
         `

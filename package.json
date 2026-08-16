@@ -2,15 +2,26 @@
   "name": "rustic-heritage-kitchenware",
   "version": "1.0.0",
   "description": "Rustic Heritage Kitchenware Ecommerce Website & Admin Dashboard",
-  "main": "api/newsletter-subscribe.js",
+  "type": "module",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'Build complete'"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "dotenv": "^16.4.5",
     "nodemailer": "^6.9.9",
-    "razorpay": "^2.9.2"
+    "razorpay": "^2.9.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.55",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.1.0"
   }
 }
+

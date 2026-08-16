@@ -132,6 +132,7 @@ CREATE TABLE public.orders (
   subtotal         NUMERIC(10,2) NOT NULL,
   discount_amount  NUMERIC(10,2) NOT NULL DEFAULT 0,
   shipping_fee     NUMERIC(10,2) NOT NULL DEFAULT 0,
+  delivery_fee     NUMERIC(10,2) NOT NULL DEFAULT 0,
   total_amount     NUMERIC(10,2) NOT NULL,
   payment_method   TEXT NOT NULL CHECK (payment_method IN ('cod', 'online', 'razorpay', 'upi', 'card')),
   payment_status   TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
