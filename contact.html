@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact Us – Rustic Heritage Kitchenware</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    html,
+    body {
+      overflow-x: hidden;
+      max-width: 100%;
+    }
+
+    .rh-nav-signin-btn {
+      background: transparent;
+      border: 2px solid var(--brown-light);
+      color: var(--brown-pale);
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-family: 'Georgia', serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+    }
+
+    .rh-nav-signin-btn:hover {
+      background: var(--brown-light);
+      color: var(--brown-dark);
+    }
+
+    .rh-nav-order-btn {
+      background: var(--brown-dark);
+      border: 2px solid var(--brown-dark);
+      color: var(--brown-pale);
+      padding: 7px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-family: 'Georgia', serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .rh-nav-order-btn:hover {
+      background: var(--brown-mid);
+      border-color: var(--brown-mid);
+    }
+
+    .rh-nav-cart-btn {
+      background: transparent;
+      border: none;
+      color: var(--brown-pale);
+      cursor: pointer;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: background 0.3s ease;
+    }
+
+    .rh-nav-cart-btn:hover {
+      background: rgba(196, 154, 108, 0.2);
+    }
+
+    .rh-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* ── Reviews Grid ── */
+    .reviews-grid-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .review-grid-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 24px;
+      border: 1px solid #E8D5B7;
+      box-shadow: 0 4px 16px rgba(92, 61, 30, 0.08);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .review-grid-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(92, 61, 30, 0.15);
+    }
+
+    .review-grid-card .stars {
+      color: #C49A6C;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    .review-grid-card .review-text {
+      font-size: 14px;
+      color: #5C3D1E;
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 14px;
+    }
+
+    .review-grid-card .reviewer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .review-grid-card .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #C49A6C, #8B5E3C);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .review-grid-card .reviewer-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #5C3D1E;
+    }
+
+    .review-grid-card .reviewer-loc {
+      font-size: 11px;
+      color: #8B5E3C;
+    }
+
+    .review-grid-card .product-tag {
+      display: inline-block;
+      background: #F5ECD7;
+      color: #8B5E3C;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #E8D5B7;
+    }
+
+    .review-grid-card .review-date {
+      font-size: 10px;
+      color: #C49A6C;
+      margin-top: 8px;
+      font-style: normal;
+    }
+
+    /* ── User-submitted reviews styling ── */
+    .user-review-card {
+      border-left: 3px solid #C49A6C;
+    }
+
+    /* ── Write Review Form ── */
+    .review-form-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 28px;
+      border: 1px solid #E8D5B7;
+      box-shadow: 0 4px 20px rgba(92, 61, 30, 0.10);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .review-form-card h3 {
+      font-size: 16px;
+      color: #5C3D1E;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #E8D5B7;
+    }
+
+    .review-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .review-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .review-field label {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #C49A6C;
+      font-weight: bold;
+    }
+
+    .review-field input,
+    .review-field textarea,
+    .review-field select {
+      padding: 12px 14px;
+      border: 1.5px solid #E8D5B7;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Georgia', serif;
+      color: #3B2A1A;
+      background: #FDF6EC;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .review-field input:focus,
+    .review-field textarea:focus,
+    .review-field select:focus {
+      border-color: #C49A6C;
+      background: #fff;
+    }
+
+    .review-field textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .star-rating-input {
+      display: flex;
+      gap: 4px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .star-rating-input span {
+      color: #E8D5B7;
+      transition: color 0.15s;
+    }
+
+    .star-rating-input span.filled {
+      color: #C49A6C;
+    }
+
+    .star-rating-input span:hover,
+    .star-rating-input span:hover~span {
+      color: #C49A6C;
+    }
+
+    .review-submit-btn {
+      padding: 12px 28px;
+      background: linear-gradient(135deg, #5C3D1E, #8B5E3C);
+      color: #F5ECD7;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Georgia', serif;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.25s;
+      margin-top: 6px;
+    }
+
+    .review-submit-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(92, 61, 30, 0.3);
+    }
+
+    .review-msg {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .review-msg.success {
+      display: block;
+      background: #e8f5ee;
+      color: #1a5c34;
+      border: 1px solid #b8e0cc;
+    }
+
+    .review-msg.error {
+      display: block;
+      background: #fde8e8;
+      color: #8b1a1a;
+      border: 1px solid #f5c6c6;
+    }
+
+    @media (max-width: 768px) {
+      .reviews-grid-section {
+        grid-template-columns: 1fr;
+      }
+
+      .review-form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="index.html" class="logo">
+      <div class="logo-icon">🏺</div>
+      <div class="logo-text"><span>Rustic Heritage</span><span>Kitchenware</span></div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html">Products</a></li>
+      <li><a href="getintouch.html">Get In Touch</a></li>
+      <li><a href="contact.html" class="active">Contact Us</a></li>
+    </ul>
+    <div class="rh-nav-actions">
+      <button class="rh-nav-signin-btn" onclick="openAuthModal('login')">Sign In</button>
+      <a href="products.html" class="rh-nav-order-btn">Order Now</a>
+      <button class="rh-nav-cart-btn" onclick="openCartDrawer()" aria-label="Cart">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="9" cy="21" r="1" />
+          <circle cx="20" cy="21" r="1" />
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+      </button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero hero-contact-padding">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-tagline">✦ We're Here for You ✦</p>
+      <h1 class="hero-contact-h1">Customer stories, reviews, and all
+        the ways to reach us</h1>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CUSTOMER STORIES ═══════════════ -->
+  <section class="section section-pale-bg">
+    <div class="section-title reveal">
+      <h2>Customer Stories</h2>
+      <p>Hear from the kitchens that trust Rustic Heritage every day</p>
+      <div class="divider"></div>
+    </div>
+
+    <!-- Static reviews + user-submitted reviews -->
+    <div class="reviews-grid-section" id="reviews-grid">
+      <!-- Static reviews (hardcoded) -->
+      <div class="review-grid-card reveal">
+        <span class="product-tag">🏺 Clay Cooking Pot</span>
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"The clay pot makes the most amazing biriyani. The slow cooking just does magic. Will
+          definitely order again."</p>
+        <div class="reviewer">
+          <div class="avatar">P</div>
+          <div>
+            <div class="reviewer-name">Priya Ramesh</div>
+            <div class="reviewer-loc">Chennai, Tamil Nadu</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-grid-card reveal">
+        <span class="product-tag">🥄 Teak Wood Ladle Set</span>
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"Best kitchen purchase this year! The 7-piece set covers everything I need. The wood
+          quality is top-notch."</p>
+        <div class="reviewer">
+          <div class="avatar">A</div>
+          <div>
+            <div class="reviewer-name">Anitha Krishnan</div>
+            <div class="reviewer-loc">Coimbatore, Tamil Nadu</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-grid-card reveal">
+        <span class="product-tag">⚱️ Brass Uruli</span>
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"Pure brass, great weight and finish. I use it for Onam sadya every year. Becomes more
+          beautiful with age!"</p>
+        <div class="reviewer">
+          <div class="avatar">L</div>
+          <div>
+            <div class="reviewer-name">Lakshmi Nair</div>
+            <div class="reviewer-loc">Thrissur, Kerala</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-grid-card reveal">
+        <span class="product-tag">🪨 Granite Cookware</span>
+        <div class="stars">★★★★☆</div>
+        <p class="review-text">"Excellent cookware set. The granite finish prevents sticking and the handles are very
+          sturdy. Happy with the purchase!"</p>
+        <div class="reviewer">
+          <div class="avatar">M</div>
+          <div>
+            <div class="reviewer-name">Meenakshi Sundaram</div>
+            <div class="reviewer-loc">Madurai, Tamil Nadu</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-grid-card reveal">
+        <span class="product-tag">🍶 Terracotta Bottles</span>
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"The painted design on the bottles is just beautiful. Water stored in them has a natural
+          earthy freshness. Highly recommend!"</p>
+        <div class="reviewer">
+          <div class="avatar">R</div>
+          <div>
+            <div class="reviewer-name">Rekha Iyer</div>
+            <div class="reviewer-loc">Bengaluru, Karnataka</div>
+          </div>
+        </div>
+      </div>
+      <div class="review-grid-card reveal">
+        <span class="product-tag">🥛 Brass Water Jug Set</span>
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"The brass jug set is a showstopper on my dining table. Guests always want to know where
+          I got it. Superb quality!"</p>
+        <div class="reviewer">
+          <div class="avatar">S</div>
+          <div>
+            <div class="reviewer-name">Sudha Venkataraman</div>
+            <div class="reviewer-loc">Bengaluru, Karnataka</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ WRITE A REVIEW ═══════════════ -->
+  <section class="section">
+    <div class="section-title reveal">
+      <h2>Write a Review</h2>
+      <p>Ordered from us? Share your experience!</p>
+      <div class="divider"></div>
+    </div>
+    <div class="review-form-card reveal">
+      <h3>✍️ Share Your Experience</h3>
+      <div class="review-form-row">
+        <div class="review-field">
+          <label>Your Name *</label>
+          <input type="text" id="rev-name" placeholder="Your full name" />
+        </div>
+        <div class="review-field">
+          <label>Location</label>
+          <input type="text" id="rev-location" placeholder="e.g. Chennai, Tamil Nadu" />
+        </div>
+      </div>
+      <div class="review-field field-mb14">
+        <label>Product Purchased</label>
+        <input type="text" id="rev-product" placeholder="e.g. Clay Cooking Pot" />
+      </div>
+      <div class="review-field field-mb14">
+        <label>Rating *</label>
+        <div class="star-rating-input" id="star-rating">
+          <span onclick="setRating(1)">★</span>
+          <span onclick="setRating(2)">★</span>
+          <span onclick="setRating(3)">★</span>
+          <span onclick="setRating(4)">★</span>
+          <span onclick="setRating(5)">★</span>
+        </div>
+      </div>
+      <div class="review-field field-mb14">
+        <label>Your Review *</label>
+        <textarea id="rev-text" placeholder="Tell us about your experience with the product..."></textarea>
+      </div>
+      <button class="review-submit-btn" id="rev-submit-btn" onclick="submitReview()">Submit Review ✦</button>
+      <div class="review-msg" id="rev-msg"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ CONTACT DETAILS ═══════════════ -->
+  <section class="section section-pale-bg">
+    <div class="section-title reveal">
+      <h2>Our Contact Details</h2>
+      <div class="divider"></div>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-card reveal">
+        <div class="icon">📍</div>
+        <h4>Our Address</h4>
+        <p>Rustic Heritage Kitchenware<br>Coimbatore, Tamil Nadu – 641001<br>India</p>
+      </div>
+      <div class="contact-card reveal">
+        <div class="icon">✉️</div>
+        <h4>Email Us</h4>
+        <p><a href="mailto:mathubharathi15@gmail.com" class="contact-link-dark">mathubharathi15@gmail.com</a><br>We reply within 24 hours</p>
+      </div>
+      <div class="contact-card reveal">
+        <div class="icon">📞</div>
+        <h4>Call &amp; WhatsApp</h4>
+        <p><a href="tel:8072505342" class="contact-link-dark">+91 8072505342</a><br><a href="https://wa.me/918072505342" target="_blank" rel="noopener noreferrer" class="contact-link-wa">Chat on WhatsApp →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORE HOURS & POLICIES -->
+  <section class="section">
+    <div class="section-title reveal">
+      <h2>Store Hours &amp; Policies</h2>
+      <div class="divider"></div>
+    <div class="contact-grid contact-grid-700">
+      <div class="contact-card reveal">
+        <div class="icon">🕐</div>
+        <h4>Business Hours</h4>
+        <p>Monday – Saturday<br>9:00 AM – 6:00 PM IST<br><br>Sunday: Closed</p>
+      </div>
+      <div class="contact-card reveal">
+        <div class="icon">🚚</div>
+        <h4>Shipping Policy</h4>
+        <p>Free shipping on orders above ₹999. Standard delivery in 5–7 business days across India.</p>
+      </div>
+      <div class="contact-card reveal">
+        <div class="icon">↩️</div>
+        <h4>Return Policy</h4>
+        <p>7-day hassle-free returns on all products. Contact us within 7 days of delivery for returns.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">
+          <div class="logo-icon">🏺</div>
+          <div class="logo-text"><span>Rustic Heritage</span><span>Kitchenware</span></div>
+        </div>
+        <p>Preserving the art of traditional Indian cooking through authentic, handcrafted kitchenware.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Quick Links</h5>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="products.html">Products</a></li>
+          <li><a href="getintouch.html">Get In Touch</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Customer Care</h5>
+        <ul>
+          <li><a href="contact.html">Shipping Policy</a></li>
+          <li><a href="contact.html">Return Policy</a></li>
+          <li><a href="profile.html">Track Order</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:mathubharathi15@gmail.com">✉️ mathubharathi15@gmail.com</a></li>
+          <li><a href="tel:8072505342">📞 +91 8072505342</a></li>
+          <li><a href="https://wa.me/918072505342" target="_blank" rel="noopener noreferrer">💬 WhatsApp Support</a></li>
+          <li><a href="#">📍 Coimbatore, Tamil Nadu, India</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Rustic Heritage Kitchenware. All rights reserved. | Made with ❤️ in India</p>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="cart.js"></script>
+  <script src="payment.js"></script>
+  <script src="auth-modal.js"></script>
+
+  <script>
+    /* ── Supabase client for reviews ── */
+    const RH_SB_URL = 'https://tlhhxpttifgtgnrzjrga.supabase.co';
+    const RH_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRsaGh4cHR0aWZndGducnpqcmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyOTQ2MDUsImV4cCI6MjA5ODg3MDYwNX0.ZYB12Ekl1EImXRdxvyGNEvXLxnNOe-36oxvo3z4gSI0';
+    let _revClient = null;
+    function getRevClient() {
+      if (_revClient) return _revClient;
+      if (window.supabase?.createClient) _revClient = window.supabase.createClient(RH_SB_URL, RH_SB_ANON);
+      return _revClient;
+    }
+
+    /* ── Star rating ── */
+    let selectedRating = 0;
+    function setRating(n) {
+      selectedRating = n;
+      document.querySelectorAll('#star-rating span').forEach((s, i) => {
+        s.classList.toggle('filled', i < n);
+      });
+    }
+
+    /* ── Submit review ── */
+    async function submitReview() {
+      const name = document.getElementById('rev-name').value.trim();
+      const location = document.getElementById('rev-location').value.trim();
+      const product = document.getElementById('rev-product').value.trim();
+      const text = document.getElementById('rev-text').value.trim();
+      const msgEl = document.getElementById('rev-msg');
+      const btn = document.getElementById('rev-submit-btn');
+
+      if (!name || !text || selectedRating === 0) {
+        msgEl.className = 'review-msg error';
+        msgEl.textContent = 'Please fill in your name, rating, and review.';
+        return;
+      }
+
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      msgEl.className = 'review-msg'; msgEl.style.display = 'none';
+
+      const sb = getRevClient();
+      if (sb) {
+        try {
+          const { error } = await sb.from('reviews').insert({
+            customer_name: name,
+            location: location || 'India',
+            product_name: product || null,
+            rating: selectedRating,
+            review_text: text,
+            status: 'approved'
+          });
+          if (error) throw error;
+        } catch (e) {
+          console.warn('Review save to DB failed:', e);
+        }
+      }
+
+      // Add the review to the page immediately
+      const grid = document.getElementById('reviews-grid');
+      const stars = '★'.repeat(selectedRating) + '☆'.repeat(5 - selectedRating);
+      const initials = name.charAt(0).toUpperCase();
+      const card = document.createElement('div');
+      card.className = 'review-grid-card user-review-card reveal visible';
+      card.innerHTML = `
+        ${product ? `<span class="product-tag">🏺 ${product}</span>` : ''}
+        <div class="stars">${stars}</div>
+        <p class="review-text">"${text}"</p>
+        <div class="reviewer">
+          <div class="avatar">${initials}</div>
+          <div>
+            <div class="reviewer-name">${name}</div>
+            <div class="reviewer-loc">${location || 'India'}</div>
+          </div>
+        </div>
+        <div class="review-date">Posted just now</div>
+      `;
+      grid.insertBefore(card, grid.firstChild);
+
+      // Reset form
+      document.getElementById('rev-name').value = '';
+      document.getElementById('rev-location').value = '';
+      document.getElementById('rev-product').value = '';
+      document.getElementById('rev-text').value = '';
+      setRating(0);
+
+      msgEl.className = 'review-msg success';
+      msgEl.textContent = '🎉 Thank you for your review! It has been posted live.';
+      btn.disabled = false; btn.textContent = 'Submit Review ✦';
+    }
+
+    /* ── Load user-submitted reviews from Supabase ── */
+    async function loadUserReviews() {
+      const sb = getRevClient();
+      if (!sb) return;
+      try {
+        const { data, error } = await sb.from('reviews').select('*').eq('status', 'approved').order('created_at', { ascending: false });
+        if (error) throw error;
+        if (!data || data.length === 0) return;
+
+        const grid = document.getElementById('reviews-grid');
+        const firstStatic = grid.firstChild;
+        data.forEach(r => {
+          const author = r.customer_name || r.name || 'Anonymous';
+          const prodName = r.product_name || r.product || '';
+          const stars = '★'.repeat(r.rating || 5) + '☆'.repeat(5 - (r.rating || 5));
+          const initials = author.charAt(0).toUpperCase();
+          const date = r.created_at
+            ? new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '';
+          const card = document.createElement('div');
+          card.className = 'review-grid-card user-review-card reveal visible';
+          card.innerHTML = `
+            ${prodName ? `<span class="product-tag">🏺 ${prodName}</span>` : ''}
+            <div class="stars">${stars}</div>
+            <p class="review-text">"${r.review_text || ''}"</p>
+            <div class="reviewer">
+              <div class="avatar">${initials}</div>
+              <div>
+                <div class="reviewer-name">${author}</div>
+                <div class="reviewer-loc">${r.location || 'India'}</div>
+              </div>
+            </div>
+            ${date ? `<div class="review-date">Posted on ${date}</div>` : ''}
+          `;
+          grid.insertBefore(card, firstStatic);
+        });
+      } catch (e) {
+        console.warn('Could not load user reviews:', e);
+      }
+    }
+
+    /* ── Init ── */
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && !href.startsWith('#') && !href.startsWith('mailto') && !href.startsWith('tel')) {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          document.body.style.transition = 'opacity 0.3s ease';
+          document.body.style.opacity = '0';
+          setTimeout(() => { window.location.href = href; }, 300);
+        });
+      }
+    });
+
+    // Load user reviews after page ready
+    setTimeout(loadUserReviews, 500);
+  </script>
+
+</body>
+
+</html>
