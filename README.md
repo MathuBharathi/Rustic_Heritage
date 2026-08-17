@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/images/banner.png" alt="Rustic Heritage Banner" width="900">
+  <img src="public/banner.png" alt="Rustic Heritage Banner" width="900">
 </p>
 
 <h1 align="center">🏺 Rustic Heritage</h1>
