@@ -43,14 +43,14 @@ export default function Home() {
       if (apiData) {
         if (apiData.success) {
           setSubscribeMsg({
-            text: '🎉 Thank you for subscribing! We have sent your exclusive 15% OFF welcome discount coupon to your email inbox.',
+            text: '🎉 You are successfully subscribed!',
             color: '#81c784',
           });
           setSubscribeEmail('');
           return;
         } else if (apiData.duplicate) {
           setSubscribeMsg({
-            text: '✦ You are already subscribed! Your 15% OFF welcome coupon was sent to your email address.',
+            text: '✦ You are already subscribed!',
             color: '#C49A6C',
           });
           setSubscribeEmail('');
@@ -67,13 +67,14 @@ export default function Home() {
 
       if (existing) {
         setSubscribeMsg({
-          text: `✦ You are already subscribed! Your 15% OFF welcome coupon is ${existing.coupon_code || 'saved'}.`,
+          text: '✦ You are already subscribed!',
           color: '#C49A6C',
         });
         setSubscribeEmail('');
         return;
       }
 
+      const randomPercent = Math.floor(Math.random() * 11) + 10;
       const couponCode = 'WELCOME-' + Math.random().toString(36).substring(2, 9).toUpperCase();
       const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -82,11 +83,12 @@ export default function Home() {
         .insert({
           code: couponCode,
           discount_type: 'percentage',
-          discount_value: 15,
+          discount_value: randomPercent,
           minimum_order: 299,
           maximum_discount: 200,
           usage_limit: 1,
           active: true,
+          free_delivery: false,
           expiry_date: expiryDate,
           generated_by_system: true,
           subscriber_email: cleanEmail,
@@ -103,7 +105,7 @@ export default function Home() {
       });
 
       setSubscribeMsg({
-        text: '🎉 You are successfully subscribed! Your 15% OFF welcome discount code has been sent to your email.',
+        text: '🎉 You are successfully subscribed!',
         color: '#81c784',
       });
       setSubscribeEmail('');

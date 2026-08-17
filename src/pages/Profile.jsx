@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { downloadInvoice } from '../services/invoice';
 
 export default function Profile() {
   const { user, profile, loading: authLoading, openAuthModal, signOut, refreshProfile } = useAuth();
@@ -458,9 +459,9 @@ export default function Profile() {
                               }}
                             >
                               <span>
-                                {item.product_name} × {item.quantity}
+                                {item.title || item.product_name || 'Handcrafted Kitchenware Item'} × {item.quantity}
                               </span>
-                              <strong>₹{item.total_price}</strong>
+                              <strong style={{ marginLeft: 'auto' }}>₹{item.total_price || (item.price * item.quantity)}</strong>
                             </div>
                           ))
                         ) : (
@@ -476,15 +477,43 @@ export default function Profile() {
                           padding: '10px 14px',
                           borderRadius: '6px',
                           display: 'flex',
-                          justify: 'space-between',
+                          justifyContent: 'space-between',
                           alignItems: 'center',
                         }}
                       >
                         <span>
-                          <strong>Delivery to:</strong> {order.shipping_address}, {order.shipping_city} - {order.shipping_pin}
+                          <strong>Delivery to:</strong> {order.shipping_address || order.delivery_address || 'Address Not Provided'}, {order.shipping_city || order.city || ''} - {order.shipping_pin || order.pincode || ''}
                         </span>
                         <button
-                          onClick={() => setSelectedInvoiceOrder(order)}
+                          onClick={() => {
+                            // Format order record with clean nested customer & totals properties for invoice service
+                            const formattedOrder = {
+                              orderId: order.order_number || order.id,
+                              customer: {
+                                name: order.customer_name,
+                                email: order.customer_email,
+                                phone: order.customer_phone,
+                                address: order.shipping_address || order.delivery_address,
+                                city: order.shipping_city || order.city,
+                                pin: order.shipping_pin || order.pincode,
+                              },
+                              items: order.items.map(it => ({
+                                name: it.title || it.product_name,
+                                qty: it.quantity,
+                                price: it.price,
+                              })),
+                              grandTotal: order.total_amount,
+                              paymentMethod: order.payment_method,
+                              totals: {
+                                subtotal: order.subtotal || (order.total_amount - (order.shipping_fee || 0)),
+                                deliveryFee: order.shipping_fee || 0,
+                                tax: Math.round((order.subtotal || order.total_amount) * 0.05),
+                                discountAmount: order.discount_amount || 0,
+                                grandTotal: order.total_amount,
+                              }
+                            };
+                            downloadInvoice(formattedOrder);
+                          }}
                           style={{
                             background: 'none',
                             border: 'none',

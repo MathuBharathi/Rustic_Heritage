@@ -72,7 +72,6 @@ export function CartProvider({ children }) {
   const subtotal = PRODUCTS.reduce((sum, p) => sum + p.price * (items[p.id] || 0), 0);
 
   const deliveryFee = (() => {
-    if (appliedCoupon?.free_delivery) return 0;
     if (subtotal === 0) return 0;
     return subtotal >= 999 ? 40 : 80;
   })();

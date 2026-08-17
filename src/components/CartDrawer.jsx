@@ -40,10 +40,10 @@ export default function CartDrawer() {
 
     try {
       const res = await validateCoupon(couponCode, subtotal);
-      applyCoupon(res);
-      const freeTxt = res.free_delivery ? ' + Free delivery!' : '';
+      applyCoupon(res.coupon);
+      const freeTxt = res.coupon?.free_delivery ? ' + Free delivery!' : '';
       setCouponMsg({
-        text: `✅ Coupon applied! You save ₹${res.discount_amount}${freeTxt}`,
+        text: `✅ Coupon applied! You save ₹${res.discountAmount}${freeTxt}`,
         type: 'success',
       });
     } catch (err) {
@@ -59,8 +59,7 @@ export default function CartDrawer() {
     setCouponMsg(null);
   };
 
-  const freeDeliveryThreshold = 999;
-  const progressToFreeDelivery = Math.min(100, Math.round((subtotal / freeDeliveryThreshold) * 100));
+
 
   return (
     <div
@@ -128,47 +127,7 @@ export default function CartDrawer() {
           </button>
         </div>
 
-        {/* Shipping Progress Bar */}
-        {subtotal > 0 && (
-          <div
-            style={{
-              padding: '12px 24px',
-              background: '#F5ECD7',
-              borderBottom: '1px solid #E8D5B7',
-              fontSize: '12px',
-              color: '#5C3D1E',
-            }}
-          >
-            {subtotal >= freeDeliveryThreshold ? (
-              <div style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                🎉 Free Delivery Unlocked!
-              </div>
-            ) : (
-              <div>
-                Add <strong>₹{freeDeliveryThreshold - subtotal}</strong> more for <strong>Reduced ₹40 Shipping</strong>!
-              </div>
-            )}
-            <div
-              style={{
-                height: '6px',
-                background: '#E8D5B7',
-                borderRadius: '3px',
-                overflow: 'hidden',
-                marginTop: '6px',
-              }}
-            >
-              <div
-                style={{
-                  height: '100%',
-                  width: `${progressToFreeDelivery}%`,
-                  background: 'linear-gradient(90deg, #C49A6C, #8B5E3C)',
-                  borderRadius: '3px',
-                  transition: 'width 0.3s ease',
-                }}
-              ></div>
-            </div>
-          </div>
-        )}
+
 
         {/* Drawer Body - Items List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>

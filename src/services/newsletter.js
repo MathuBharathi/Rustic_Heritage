@@ -16,9 +16,9 @@ export async function subscribeToNewsletter(email) {
     if (res.ok) {
       const data = await res.json();
       if (data.duplicate) {
-        return { status: 'duplicate', message: '✦ You are already subscribed! Your 15% OFF welcome coupon was sent to your email.' };
+        return { status: 'duplicate', message: '✦ You are already subscribed!' };
       }
-      return { status: 'success', message: '🎉 Thank you for subscribing! We have sent your exclusive 15% OFF welcome discount coupon to your email inbox.' };
+      return { status: 'success', message: '🎉 You are successfully subscribed!' };
     }
   } catch (apiErr) {
     console.warn('/api/newsletter-subscribe endpoint unreachable, using Supabase fallback:', apiErr);
@@ -32,9 +32,10 @@ export async function subscribeToNewsletter(email) {
     .maybeSingle();
 
   if (existing) {
-    return { status: 'duplicate', message: `✦ You are already subscribed! Your 15% OFF welcome coupon is ${existing.coupon_code || 'saved'}.` };
+    return { status: 'duplicate', message: '✦ You are already subscribed!' };
   }
 
+  const randomPercent = Math.floor(Math.random() * 11) + 10;
   const couponCode = 'WELCOME-' + Math.random().toString(36).substring(2, 9).toUpperCase();
   const expiryDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -43,11 +44,12 @@ export async function subscribeToNewsletter(email) {
     .insert({
       code: couponCode,
       discount_type: 'percentage',
-      discount_value: 15,
+      discount_value: randomPercent,
       minimum_order: 299,
       maximum_discount: 200,
       usage_limit: 1,
       active: true,
+      free_delivery: false,
       expiry_date: expiryDate,
       generated_by_system: true,
       subscriber_email: cleanEmail,
@@ -63,7 +65,7 @@ export async function subscribeToNewsletter(email) {
     active: true,
   });
 
-  return { status: 'success', message: '🎉 You are successfully subscribed! Your 15% OFF welcome discount code has been sent to your email.' };
+  return { status: 'success', message: '🎉 You are successfully subscribed!' };
 }
 
 export async function fetchSubscribers() {

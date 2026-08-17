@@ -1096,11 +1096,16 @@ footer { background: var(--brown-dark); color: var(--brown-pale); padding: 50px 
   overflow: hidden;
   max-height: 92vh;
   overflow-y: auto;
+  -ms-overflow-style: none;
   border-top: 4px solid #C49A6C;
   box-shadow: 0 24px 80px rgba(0,0,0,0.5);
   transform: translateY(20px);
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.prod-modal-card::-webkit-scrollbar {
+  display: none;
 }
 
 .pm-header {
@@ -1553,6 +1558,24 @@ footer { background: var(--brown-dark); color: var(--brown-pale); padding: 50px 
 .product-card-body button {
   margin-top: auto !important;
   width: 100% !important;
+}
+
+.reviews-horizontal-scroll {
+  display: flex !important;
+  gap: 24px !important;
+  overflow-x: auto !important;
+  padding: 10px 4px 20px 4px !important;
+  -ms-overflow-style: none !important;
+}
+
+.reviews-horizontal-scroll::-webkit-scrollbar {
+  display: none !important;
+}
+
+.reviews-horizontal-scroll .review-grid-card {
+  flex: 0 0 350px !important;
+  max-width: 350px !important;
+  margin: 0 !important;
 }
 
 

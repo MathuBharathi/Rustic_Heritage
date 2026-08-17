@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { processOrderPayment } from '../services/payment';
 import { downloadInvoice } from '../services/invoice';
 import { useNavigate } from 'react-router-dom';
+import { PRODUCTS } from '../services/products';
 
 export default function CheckoutModal() {
   const { user, profile } = useAuth();
@@ -94,12 +95,29 @@ export default function CheckoutModal() {
         appliedCoupon,
       });
 
+      // Map dictionary to list of real product items with name and price
+      const detailedItems = Object.keys(items).map(id => {
+        const prod = PRODUCTS.find(p => p.id === Number(id));
+        return {
+          id: Number(id),
+          name: prod ? prod.name : 'Handcrafted Kitchenware Item',
+          price: prod ? prod.price : 0,
+          qty: items[id],
+        };
+      });
+
+      const savedTotals = { subtotal, deliveryFee, tax, discountAmount, grandTotal };
+      const savedCoupon = appliedCoupon;
+
       // Clear cart ONLY AFTER successful order creation
       clearCart();
       setOrderSuccess({
         ...result,
-        items,
+        items: detailedItems,
         paymentMethod,
+        totals: savedTotals,
+        appliedCoupon: savedCoupon,
+        grandTotal: savedTotals.grandTotal,
       });
     } catch (err) {
       console.error('Payment/Checkout error:', err);
@@ -537,14 +555,18 @@ export default function CheckoutModal() {
                 <span>₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
               {discountAmount > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#1a5c34' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#1a5c34', marginBottom: '4px' }}>
                   <span>Discount</span>
                   <span>-₹{discountAmount}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>GST (5%)</span>
+                <span>₹{tax}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span>Delivery</span>
-                <span>{deliveryFee === 0 ? 'FREE' : `₹${deliveryFee}`}</span>
+                <span>₹{deliveryFee}</span>
               </div>
               <div
                 style={{

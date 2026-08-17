@@ -179,29 +179,60 @@ export async function saveOrderToDatabase({
   paymentId = null,
   paymentStatus = 'pending',
 }) {
-  const { subtotal, deliveryFee, discountAmount, grandTotal } = totals;
+  const { subtotal, deliveryFee, discountAmount, grandTotal, tax } = totals;
   const orderNum = 'RH-' + Math.floor(100000 + Math.random() * 900000);
+
+  // Retrieve user session dynamically to associate user_id
+  let profileId = null;
+  try {
+    const { data: sessionRes } = await supabase.auth.getSession();
+    const authUserId = sessionRes?.session?.user?.id;
+    if (authUserId) {
+      const { data: prof } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('auth_user_id', authUserId)
+        .maybeSingle();
+      if (prof) {
+        profileId = prof.id;
+      }
+    }
+  } catch (authErr) {
+    console.warn('Session resolve notice:', authErr);
+  }
+
+  const taxVal = tax !== undefined ? tax : Math.round(Number(subtotal || 0) * 0.05);
 
   let payload = {
     order_number: orderNum,
+    user_id: profileId,
     customer_name: customer.name.trim(),
     customer_email: customer.email.trim().toLowerCase(),
     customer_phone: customer.phone.trim(),
     delivery_address: customer.address.trim(),
     shipping_address: customer.address.trim(),
     city: customer.city.trim(),
+    delivery_city: customer.city.trim(),
     shipping_city: customer.city.trim(),
     pincode: customer.pin.trim(),
+    delivery_pin: customer.pin.trim(),
     shipping_pin: customer.pin.trim(),
     state: customer.state || 'Tamil Nadu',
+    delivery_state: customer.state || 'Tamil Nadu',
     shipping_state: customer.state || 'Tamil Nadu',
+    delivery_country: 'India',
     subtotal: Number(subtotal || 0),
     shipping_fee: Number(deliveryFee || 0),
     delivery_fee: Number(deliveryFee || 0),
+    delivery_charge: Number(deliveryFee || 0),
+    discount: Number(discountAmount || 0),
     discount_amount: Number(discountAmount || 0),
+    gst: Number(taxVal || 0),
+    tax: Number(taxVal || 0),
     total_amount: Number(grandTotal || 0),
     payment_method: paymentMethod,
     payment_status: paymentStatus,
+    payment_id: paymentId,
     razorpay_payment_id: paymentId,
     order_status: 'pending',
     created_at: new Date().toISOString(),

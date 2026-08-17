@@ -2,7 +2,14 @@ export function downloadInvoice(orderData) {
   const orderNum = orderData.orderId || orderData.order_number || 'RH-ORDER';
   const customer = orderData.customer || {};
   const items = orderData.items || [];
-  const grandTotal = orderData.grandTotal || orderData.total_amount || 0;
+  const totals = orderData.totals || {};
+  const appliedCoupon = orderData.appliedCoupon || null;
+
+  const subtotal = totals.subtotal || 0;
+  const deliveryFee = totals.deliveryFee !== undefined ? totals.deliveryFee : (totals.shipping_fee || 0);
+  const tax = totals.tax || 0;
+  const discountAmount = totals.discountAmount || 0;
+  const grandTotal = orderData.grandTotal || totals.grandTotal || 0;
   const paymentMethod = orderData.paymentMethod || orderData.payment_method || 'cod';
 
   const invoiceHtml = `
@@ -21,7 +28,7 @@ export function downloadInvoice(orderData) {
     .table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13.5px; }
     .table th { background: #F5ECD7; color: #5C3D1E; padding: 10px 14px; text-align: left; border-bottom: 1px solid #E8D5B7; }
     .table td { padding: 12px 14px; border-bottom: 1px solid #E8D5B7; }
-    .totals { text-align: right; font-size: 14px; margin-top: 20px; }
+    .totals { text-align: right; font-size: 14px; margin-top: 20px; line-height: 1.8; }
     .totals-grand { font-size: 18px; font-weight: bold; color: #5C3D1E; margin-top: 8px; border-top: 1px solid #C49A6C; padding-top: 8px; display: inline-block; }
     .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #8B5E3C; border-top: 1px dashed #C49A6C; padding-top: 20px; }
     @media print {
@@ -59,7 +66,7 @@ export function downloadInvoice(orderData) {
         <tr>
           <th>Item Description</th>
           <th style="text-align: center;">Qty</th>
-          <th style="text-align: right;">Price</th>
+          <th style="text-align: right;">Unit Price</th>
           <th style="text-align: right;">Total</th>
         </tr>
       </thead>
@@ -75,14 +82,18 @@ export function downloadInvoice(orderData) {
           <tr>
             <td>Handcrafted Kitchenware Purchase</td>
             <td style="text-align: center;">1</td>
-            <td style="text-align: right;">₹${grandTotal.toLocaleString('en-IN')}</td>
-            <td style="text-align: right;">₹${grandTotal.toLocaleString('en-IN')}</td>
+            <td style="text-align: right;">₹${subtotal.toLocaleString('en-IN')}</td>
+            <td style="text-align: right;">₹${subtotal.toLocaleString('en-IN')}</td>
           </tr>
         `}
       </tbody>
     </table>
 
     <div class="totals">
+      <div>Subtotal: ₹${subtotal.toLocaleString('en-IN')}</div>
+      ${tax > 0 ? `<div>GST (5%): ₹${tax.toLocaleString('en-IN')}</div>` : ''}
+      <div>Delivery Fee: ${deliveryFee === 0 ? 'FREE' : `₹${deliveryFee.toLocaleString('en-IN')}`}</div>
+      ${discountAmount > 0 ? `<div style="color: #1a5c34;">Discount (Coupon ${appliedCoupon?.code || ''}): -₹${discountAmount.toLocaleString('en-IN')}</div>` : ''}
       <div class="totals-grand">
         Grand Total: ₹${grandTotal.toLocaleString('en-IN')}
       </div>

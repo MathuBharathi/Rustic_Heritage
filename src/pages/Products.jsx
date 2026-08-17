@@ -78,17 +78,6 @@ export default function Products() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
 
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            className={`filter-btn ${selectedCategory === cat.id ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(cat.id)}
-            type="button"
-          >
-            {cat.label}
-          </button>
-        ))}
-
         <div className="filter-count">
           Showing {filteredProducts.length} of {productList.length} products
         </div>
