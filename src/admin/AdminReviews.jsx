@@ -19,46 +19,45 @@ export default function AdminReviews({ reviews, onToggleApprove }) {
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Rating</th>
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Product</th>
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Review Content</th>
-              <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Status</th>
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Action</th>
             </tr>
           </thead>
           <tbody>
-            {reviews.map((r) => (
-              <tr key={r.id} style={{ borderBottom: '1px solid #F0E2CD' }}>
-                <td style={{ padding: '16px 18px' }}>
-                  <strong>{r.reviewer_name}</strong>
-                  <div style={{ fontSize: '11px', color: '#8B5E3C' }}>{r.city}</div>
-                </td>
-                <td style={{ padding: '16px 18px' }}><span style={{ color: '#D4AF37', fontSize: '15px' }}>{'★'.repeat(r.rating || 5)}</span></td>
-                <td style={{ padding: '16px 18px' }}>{r.product_name}</td>
-                <td style={{ padding: '16px 18px', maxWidth: '320px', lineHeight: '1.5' }}>"{r.review_text}"</td>
-                <td style={{ padding: '16px 18px' }}>
-                  <span className={`rh-status-badge ${r.approved ? 'delivered' : 'pending'}`}>
-                    {r.approved ? 'Approved' : 'Pending'}
-                  </span>
-                </td>
-                <td style={{ padding: '16px 18px' }}>
-                  <button
-                    onClick={() => onToggleApprove(r.id, r.approved)}
-                    type="button"
-                    style={{
-                      background: r.approved ? '#FFF3CD' : '#D4EDDA',
-                      color: r.approved ? '#856404' : '#155724',
-                      border: `1px solid ${r.approved ? '#ffeeba' : '#c3e6cb'}`,
-                      padding: '6px 12px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer',
-                      fontFamily: "'Georgia', serif",
-                    }}
-                  >
-                    {r.approved ? 'Hide' : 'Approve'}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {reviews.map((r) => {
+              const reviewerName = r.customer_name || r.reviewer_name || r.name || r.user_name || 'Verified Customer';
+              const reviewerCity = r.location || r.city || 'India';
+              const isApproved = r.approved !== false && (r.status || 'approved').toLowerCase() !== 'hidden' && (r.status || 'approved').toLowerCase() !== 'pending';
+
+              return (
+                <tr key={r.id} style={{ borderBottom: '1px solid #F0E2CD' }}>
+                  <td style={{ padding: '16px 18px' }}>
+                    <strong>{reviewerName}</strong>
+                    <div style={{ fontSize: '11px', color: '#8B5E3C' }}>{reviewerCity}</div>
+                  </td>
+                  <td style={{ padding: '16px 18px' }}>
+                    <span style={{ color: '#D4AF37', fontSize: '15px' }}>{'★'.repeat(r.rating || 5)}</span>
+                  </td>
+                  <td style={{ padding: '16px 18px' }}>{r.product_name || 'Rustic Heritage Kitchenware'}</td>
+                  <td style={{ padding: '16px 18px', maxWidth: '340px', lineHeight: '1.5' }}>"{r.review_text}"</td>
+                  <td style={{ padding: '16px 18px' }}>
+                    <span
+                      style={{
+                        background: '#E8F5E9',
+                        color: '#2E7D32',
+                        border: '1px solid #A5D6A7',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        display: 'inline-block',
+                      }}
+                    >
+                      Approved ✅
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

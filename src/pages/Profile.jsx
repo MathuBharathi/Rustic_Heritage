@@ -42,24 +42,28 @@ export default function Profile() {
   }, [profile, user]);
 
   useEffect(() => {
-    if (activeTab === 'orders' && user) {
+    if (user) {
       fetchUserOrders();
     }
-  }, [activeTab, user]);
+  }, [user, profile, activeTab]);
 
   const fetchUserOrders = async () => {
     if (!user?.email) return;
     setOrdersLoading(true);
     try {
-      const { data: userOrders, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('customer_email', user.email.toLowerCase())
-        .order('created_at', { ascending: false });
+      const cleanEmail = user.email.trim().toLowerCase();
+      let query = supabase.from('orders').select('*');
+
+      if (profile?.id) {
+        query = query.or(`customer_email.ilike.${cleanEmail},user_id.eq.${profile.id}`);
+      } else {
+        query = query.ilike('customer_email', cleanEmail);
+      }
+
+      const { data: userOrders, error } = await query.order('created_at', { ascending: false });
 
       if (!error && userOrders) {
-        // Fetch order items for each order
-        const orderIds = userOrders.map((o) => o.id);
+        const orderIds = userOrders.map((o) => o.id).filter(Boolean);
         let itemsMap = {};
         if (orderIds.length > 0) {
           const { data: items } = await supabase
@@ -101,22 +105,73 @@ export default function Profile() {
 
     try {
       if (user?.id) {
-        const { error } = await supabase.from('user_profiles').upsert(
-          {
-            auth_user_id: user.id,
-            email: email.trim().toLowerCase(),
-            full_name: fullName.trim(),
-            phone: phone.trim(),
-            default_address: address.trim(),
-            default_city: city.trim(),
-            default_pin: pin.trim(),
-            default_state: state.trim(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'auth_user_id' }
-        );
+        // 1. Save profile to user_profiles table
+        const { data: updatedPf, error: pfErr } = await supabase
+          .from('user_profiles')
+          .upsert(
+            {
+              auth_user_id: user.id,
+              email: email.trim().toLowerCase(),
+              full_name: fullName.trim(),
+              phone: phone.trim(),
+              default_address: address.trim(),
+              default_city: city.trim(),
+              default_pin: pin.trim(),
+              default_state: state.trim(),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'auth_user_id' }
+          )
+          .select()
+          .maybeSingle();
 
-        if (error) throw error;
+        if (pfErr) throw pfErr;
+
+        // Retrieve user_profiles primary key (UUID) to reference in addresses table
+        let targetProfileId = updatedPf?.id || profile?.id;
+        if (!targetProfileId) {
+          const { data: fetchedPf } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('auth_user_id', user.id)
+            .maybeSingle();
+          targetProfileId = fetchedPf?.id;
+        }
+
+        // 2. Save address to addresses table
+        if (targetProfileId && address.trim()) {
+          const { data: existingAddr } = await supabase
+            .from('addresses')
+            .select('id')
+            .eq('user_id', targetProfileId)
+            .maybeSingle();
+
+          const addrRecord = {
+            user_id: targetProfileId,
+            receiver_name: fullName.trim(),
+            phone: phone.trim() || null,
+            address_line1: address.trim(),
+            city: city.trim() || 'Coimbatore',
+            state: state.trim() || 'Tamil Nadu',
+            pincode: pin.trim() || '641001',
+            country: 'India',
+            is_default: true,
+            updated_at: new Date().toISOString(),
+          };
+
+          if (existingAddr?.id) {
+            const { error: updateErr } = await supabase
+              .from('addresses')
+              .update(addrRecord)
+              .eq('id', existingAddr.id);
+            if (updateErr) console.warn('Address update error:', updateErr);
+          } else {
+            const { error: insertErr } = await supabase
+              .from('addresses')
+              .insert(addrRecord);
+            if (insertErr) console.warn('Address insert error:', insertErr);
+          }
+        }
 
         // Update localStorage cache
         const cache = {
@@ -131,7 +186,7 @@ export default function Profile() {
         localStorage.setItem('rh_user_profile', JSON.stringify(cache));
 
         await refreshProfile();
-        setSaveMsg({ text: '✅ Profile & default address updated successfully!', type: 'success' });
+        setSaveMsg({ text: '✅ Profile & default address stored in database successfully!', type: 'success' });
       }
     } catch (err) {
       console.error('Profile save error:', err);

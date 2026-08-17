@@ -1,6 +1,6 @@
-const Razorpay = require('razorpay');
+import Razorpay from 'razorpay';
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -9,36 +9,40 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const key_id = process.env.RAZORPAY_KEY_ID;
-    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    const { amount, currency = 'INR', receipt } = req.body || {};
 
-    if (!key_id || !key_secret) {
-      return res.status(500).json({ error: 'Razorpay keys not configured on server' });
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    const instance = new Razorpay({ key_id, key_secret });
+    const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_live_TQJzZBn7rHectv';
+    const key_secret = process.env.RAZORPAY_KEY_SECRET || 'o1NNZ9TUz7JulvqSOCrX2Kzr';
 
-    const body = req.body || {};
-    const amount = body.amount; // in paise
-    const currency = body.currency || 'INR';
-    const receipt = body.receipt || `rh_${Date.now()}`;
-    const notes = body.notes || {};
-
-    if (!amount || isNaN(amount)) {
-      return res.status(400).json({ error: 'Valid order amount is required' });
-    }
-
-    const order = await instance.orders.create({
-      amount: parseInt(amount, 10),
-      currency,
-      receipt,
-      notes
+    const razorpay = new Razorpay({
+      key_id,
+      key_secret,
     });
 
-    return res.status(200).json(order);
+    const amountInPaise = Math.round(Number(amount) * 100);
+
+    const options = {
+      amount: amountInPaise,
+      currency: currency.toUpperCase(),
+      receipt: receipt || 'rcpt_' + Date.now(),
+      payment_capture: 1,
+    };
+
+    const order = await razorpay.orders.create(options);
+    return res.status(200).json({
+      success: true,
+      id: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key_id,
+    });
 
   } catch (err) {
     console.error('Razorpay Create Order Error:', err);
     return res.status(500).json({ error: err.message || 'Failed to create Razorpay order' });
   }
-};
+}

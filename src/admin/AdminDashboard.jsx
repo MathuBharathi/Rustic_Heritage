@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function AdminDashboard({ orders, products, subscribers, reviews, onNavigateOrders }) {
+export default function AdminDashboard({ orders, products, subscribers, reviews, users = [], onNavigateOrders }) {
   const totalRevenue = orders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.order_status === 'pending').length;
@@ -9,7 +9,7 @@ export default function AdminDashboard({ orders, products, subscribers, reviews,
   return (
     <div>
       {/* KPI METRIC CARDS */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '32px' }}>
         <div style={{ background: '#FFFFFF', padding: '24px', borderRadius: '8px', border: '1px solid #E8D5B7', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '11px', letterSpacing: '2px', color: '#8B5E3C', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>
             TOTAL REVENUE
@@ -28,6 +28,16 @@ export default function AdminDashboard({ orders, products, subscribers, reviews,
             {totalOrders}
           </div>
           <div style={{ fontSize: '12px', color: '#8B5E3C' }}>{pendingOrders} Pending Fulfillment</div>
+        </div>
+
+        <div style={{ background: '#FFFFFF', padding: '24px', borderRadius: '8px', border: '1px solid #E8D5B7', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '11px', letterSpacing: '2px', color: '#8B5E3C', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>
+            REGISTERED USERS
+          </div>
+          <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#3B2A1A', marginBottom: '4px' }}>
+            {users.length}
+          </div>
+          <div style={{ fontSize: '12px', color: '#8B5E3C' }}>Registered Store Accounts</div>
         </div>
 
         <div style={{ background: '#FFFFFF', padding: '24px', borderRadius: '8px', border: '1px solid #E8D5B7', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>

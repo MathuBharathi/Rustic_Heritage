@@ -86,7 +86,16 @@ export default function Reviews() {
         .order('created_at', { ascending: false });
 
       if (!error && data && data.length > 0) {
-        setReviewsList([...data, ...DEFAULT_REVIEWS]);
+        const approvedOnly = data.filter(
+          (rev) => rev.approved !== false && (rev.status || 'approved').toLowerCase() !== 'hidden'
+        );
+
+        const formatted = approvedOnly.map((rev) => ({
+          ...rev,
+          reviewer_name: rev.customer_name || rev.reviewer_name || 'Store Customer',
+          city: rev.location || rev.city || 'India',
+        }));
+        setReviewsList([...formatted, ...DEFAULT_REVIEWS]);
       }
     } catch (e) {
       console.warn('Reviews fetch notice:', e);
@@ -103,15 +112,21 @@ export default function Reviews() {
     setLoading(true);
     setMsg(null);
 
+    const cleanName = name.trim();
+    const cleanCity = city.trim() || 'India';
+    const cleanProduct = productName.trim() || 'Rustic Heritage Kitchenware';
+
     let payload = {
-      reviewer_name: name.trim(),
-      city: city.trim() || 'India',
-      product_name: productName.trim() || 'Rustic Heritage Product',
+      customer_name: cleanName,
+      reviewer_name: cleanName,
+      customer_email: user?.email || null,
+      location: cleanCity,
+      city: cleanCity,
+      product_name: cleanProduct,
       rating: Number(rating),
       review_text: reviewText.trim(),
-      approved: true, // Auto-approved fallback
-      is_approved: true,
-      user_id: user?.id || null,
+      status: 'approved',
+      approved: true,
       created_at: new Date().toISOString(),
     };
 
@@ -134,18 +149,12 @@ export default function Reviews() {
       }
     }
 
-    // Prepend new review directly onto page list immediately
-    const newLocalReview = {
-      id: 'rev_' + Date.now(),
-      reviewer_name: name.trim(),
-      city: city.trim() || 'India',
-      product_name: productName.trim() || 'Rustic Heritage Product',
-      rating: Number(rating),
-      review_text: reviewText.trim(),
-      created_at: new Date().toISOString(),
-    };
+    if (insertErr) {
+      console.error('Review submission error:', insertErr);
+    }
 
-    setReviewsList([newLocalReview, ...reviewsList]);
+    // Instantly refresh list from database
+    await fetchApprovedReviews();
 
     setMsg({
       text: '🎉 Thank you for sharing your story! Your review has been submitted and posted successfully.',
@@ -163,17 +172,17 @@ export default function Reviews() {
   return (
     <div>
       {/* HERO */}
-      <section className="hero hero-padding-70">
+      <section className="git-hero">
         <p className="hero-tagline">✦ Real Stories ✦</p>
-        <h1 className="font-size-40">Customer Stories</h1>
+        <h1>Customer Stories</h1>
         <p>Hear from the kitchens that trust Rustic Heritage every day</p>
       </section>
 
-      {/* REVIEWS GRID SECTION */}
-      <section className="section">
-        <div className="section-title reveal visible">
+      {/* ALL CUSTOMER EXPERIENCES SECTION */}
+      <section className="all-experiences-section">
+        <div className="section-title reveal visible" style={{ marginBottom: '24px' }}>
           <h2>All Customer Experiences</h2>
-          <p>Read honest feedback from home cooks across India</p>
+          <p>Read authentic feedback from families and chefs cooking with our handcrafted heritage utensils</p>
           <div className="divider"></div>
         </div>
 
@@ -182,17 +191,17 @@ export default function Reviews() {
             <div key={rev.id || index} className="review-grid-card">
               {rev.product_name && <span className="product-tag">{rev.product_name}</span>}
               <div className="stars">
-                {'★'.repeat(rev.rating)}
-                {'☆'.repeat(5 - rev.rating)}
+                {'★'.repeat(rev.rating || 5)}
+                {'☆'.repeat(5 - (rev.rating || 5))}
               </div>
               <p className="review-text">"{rev.review_text}"</p>
               <div className="reviewer">
                 <div className="avatar">
-                  {(rev.reviewer_name || 'Customer').slice(0, 1).toUpperCase()}
+                  {(rev.customer_name || rev.reviewer_name || 'Customer').slice(0, 1).toUpperCase()}
                 </div>
                 <div>
-                  <div className="reviewer-name">{rev.reviewer_name}</div>
-                  <div className="reviewer-loc">{rev.city || 'India'}</div>
+                  <div className="reviewer-name">{rev.customer_name || rev.reviewer_name || 'Store Customer'}</div>
+                  <div className="reviewer-loc">{rev.location || rev.city || 'India'}</div>
                 </div>
               </div>
             </div>

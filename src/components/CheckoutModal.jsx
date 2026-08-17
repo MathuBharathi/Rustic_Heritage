@@ -35,31 +35,34 @@ export default function CheckoutModal() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [orderSuccess, setOrderSuccess] = useState(null);
 
-  // Auto-fill from profile or localStorage cache
+  // Auto-fill from profile only when modal opens, ensuring clean state per user
   useEffect(() => {
-    if (profile) {
-      if (profile.full_name) setName(profile.full_name);
-      if (profile.email) setEmail(profile.email);
-      if (profile.phone) setPhone(profile.phone);
-      if (profile.default_address) setAddress(profile.default_address);
-      if (profile.default_city) setCity(profile.default_city);
-      if (profile.default_pin) setPin(profile.default_pin);
-      if (profile.default_state) setState(profile.default_state);
-    } else if (user) {
-      if (user.email) setEmail(user.email);
-      if (user.user_metadata?.full_name) setName(user.user_metadata.full_name);
-      if (user.user_metadata?.phone) setPhone(user.user_metadata.phone);
-    } else {
-      try {
-        const cache = JSON.parse(localStorage.getItem('rh_user_profile') || '{}');
-        if (cache.name) setName(cache.name);
-        if (cache.email) setEmail(cache.email);
-        if (cache.phone) setPhone(cache.phone);
-        if (cache.address) setAddress(cache.address);
-        if (cache.city) setCity(cache.city);
-        if (cache.pin) setPin(cache.pin);
-        if (cache.state) setState(cache.state);
-      } catch (e) {}
+    if (checkoutModalOpen) {
+      if (profile) {
+        setName(profile.full_name || user?.user_metadata?.full_name || '');
+        setEmail(profile.email || user?.email || '');
+        setPhone(profile.phone || user?.user_metadata?.phone || '');
+        setAddress(profile.default_address || '');
+        setCity(profile.default_city || '');
+        setPin(profile.default_pin || '');
+        setState(profile.default_state || '');
+      } else if (user) {
+        setName(user.user_metadata?.full_name || '');
+        setEmail(user.email || '');
+        setPhone(user.user_metadata?.phone || '');
+        setAddress('');
+        setCity('');
+        setPin('');
+        setState('');
+      } else {
+        setName('');
+        setEmail('');
+        setPhone('');
+        setAddress('');
+        setCity('');
+        setPin('');
+        setState('');
+      }
     }
   }, [profile, user, checkoutModalOpen]);
 
@@ -151,6 +154,7 @@ export default function CheckoutModal() {
       onClick={closeCheckoutModal}
     >
       <div
+        className="rh-no-scrollbar"
         style={{
           background: '#FDF6EC',
           width: '100%',
@@ -202,7 +206,7 @@ export default function CheckoutModal() {
 
         {orderSuccess ? (
           /* Order Confirmation View */
-          <div style={{ padding: '28px 24px', textAlign: 'center', overflowY: 'auto', flex: 1 }}>
+          <div className="rh-no-scrollbar" style={{ padding: '28px 24px', textAlign: 'center', overflowY: 'auto', flex: 1 }}>
             <div style={{ fontSize: '52px', marginBottom: '12px' }}>✨</div>
             <h3 style={{ fontSize: '20px', color: '#3B2A1A', marginBottom: '8px' }}>
               Order Placed Successfully!
@@ -284,7 +288,7 @@ export default function CheckoutModal() {
           </div>
         ) : (
           /* Checkout Form View */
-          <form onSubmit={handleSubmit} style={{ overflowY: 'auto', padding: '24px', flex: 1 }}>
+          <form onSubmit={handleSubmit} className="rh-no-scrollbar" style={{ overflowY: 'auto', padding: '24px', flex: 1 }}>
             {errorMsg && (
               <div
                 style={{
@@ -471,17 +475,17 @@ export default function CheckoutModal() {
 
             {/* Payment Method Section */}
             <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#5C3D1E', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              <h4 style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#5C3D1E', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>
                 2. Select Payment Method
               </h4>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <label
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 14px',
+                    gap: '8px',
+                    padding: '12px 14px',
                     background: paymentMethod === 'cod' ? '#F5ECD7' : '#fff',
                     border: `1.5px solid ${paymentMethod === 'cod' ? '#5C3D1E' : '#E8D5B7'}`,
                     borderRadius: '6px',
@@ -496,22 +500,17 @@ export default function CheckoutModal() {
                     onChange={() => setPaymentMethod('cod')}
                     accentColor="#5C3D1E"
                   />
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '13px', color: '#3B2A1A' }}>
-                      💵 Cash on Delivery (COD)
-                    </strong>
-                    <span style={{ fontSize: '11px', color: '#8B5E3C' }}>
-                      Pay with cash upon delivery at your doorstep
-                    </span>
-                  </div>
+                  <strong style={{ fontSize: '13.5px', color: '#3B2A1A' }}>
+                    COD
+                  </strong>
                 </label>
 
                 <label
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    padding: '10px 14px',
+                    gap: '8px',
+                    padding: '12px 14px',
                     background: paymentMethod === 'razorpay' ? '#F5ECD7' : '#fff',
                     border: `1.5px solid ${paymentMethod === 'razorpay' ? '#5C3D1E' : '#E8D5B7'}`,
                     borderRadius: '6px',
@@ -526,14 +525,9 @@ export default function CheckoutModal() {
                     onChange={() => setPaymentMethod('razorpay')}
                     accentColor="#5C3D1E"
                   />
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '13px', color: '#3B2A1A' }}>
-                      💳 Online Payment (Razorpay UPI, Cards)
-                    </strong>
-                    <span style={{ fontSize: '11px', color: '#8B5E3C' }}>
-                      Instant confirmation via GPay, PhonePe, Cards &amp; Netbanking
-                    </span>
-                  </div>
+                  <strong style={{ fontSize: '13.5px', color: '#3B2A1A' }}>
+                    Online
+                  </strong>
                 </label>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function AdminCoupons({ coupons, onCreateClick }) {
+export default function AdminCoupons({ coupons, onCreateClick, onToggleActive, onDeleteCoupon }) {
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #E8D5B7', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', overflow: 'hidden' }}>
       {/* Table Toolbar */}
@@ -37,6 +37,7 @@ export default function AdminCoupons({ coupons, onCreateClick }) {
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Min Order</th>
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Used Count</th>
               <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Status</th>
+              <th style={{ padding: '14px 18px', borderBottom: '1.5px solid #E8D5B7', color: '#5C3D1E', fontSize: '12px', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 'bold' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +57,43 @@ export default function AdminCoupons({ coupons, onCreateClick }) {
                   <span className={`rh-status-badge ${c.active ? 'delivered' : 'cancelled'}`}>
                     {c.active ? 'Active' : 'Disabled'}
                   </span>
+                </td>
+                <td style={{ padding: '16px 18px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => onToggleActive && onToggleActive(c.id, !c.active)}
+                      type="button"
+                      style={{
+                        background: c.active ? '#A94442' : '#2E7D32',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {c.active ? 'Disable 🚫' : 'Enable ✅'}
+                    </button>
+
+                    <button
+                      onClick={() => onDeleteCoupon && onDeleteCoupon(c.id, c.code)}
+                      type="button"
+                      style={{
+                        background: '#FFF0F0',
+                        color: '#C62828',
+                        border: '1px solid #EF9A9A',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Delete 🗑️
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

@@ -24,8 +24,17 @@ export default function AuthModal() {
 
   if (!authModalOpen) return null;
 
+  const resetFormFields = () => {
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setPhone('');
+    setConfirmPassword('');
+  };
+
   const handleTabChange = (tab) => {
     setAlert(null);
+    resetFormFields();
     openAuthModal(tab);
   };
 
@@ -89,9 +98,7 @@ export default function AuthModal() {
         .eq('auth_user_id', data.user.id)
         .maybeSingle();
 
-      const isAdminUser =
-        pf?.is_admin === true ||
-        ['workatbuildcrew@gmail.com', 'mathubharathi15@gmail.com'].includes(cleanEmail);
+      const isAdminUser = pf?.is_admin === true || cleanEmail === 'mathubharathi15@gmail.com';
 
       if (!isAdminUser) {
         await supabase.auth.signOut();
@@ -159,20 +166,30 @@ export default function AuthModal() {
       if (error) throw error;
 
       if (data?.user) {
-        const isAdminAccount = ['workatbuildcrew@gmail.com', 'mathubharathi15@gmail.com'].includes(cleanEmail);
         await supabase.from('user_profiles').upsert(
           {
             auth_user_id: data.user.id,
             email: cleanEmail,
             full_name: cleanName,
             phone: cleanPhone,
-            is_admin: isAdminAccount,
+            is_admin: false,
           },
           { onConflict: 'auth_user_id' }
         );
+
+        // Send registration welcome email
+        fetch('/api/send-welcome-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: cleanName,
+            email: cleanEmail,
+          }),
+        }).catch((e) => console.warn('Registration welcome email notice:', e));
       }
 
       await refreshProfile();
+      resetFormFields();
       setAlert({
         type: 'success',
         message: '🎉 Account created successfully! You are now signed in.',
@@ -226,24 +243,27 @@ export default function AuthModal() {
         <div className="rh-auth-goldbar"></div>
 
         <div className="rh-auth-tabs">
-          <button
-            className={`rh-auth-tab ${authModalTab === 'login' ? 'active' : ''}`}
-            onClick={() => handleTabChange('login')}
-            type="button"
-          >
-            Sign In
-          </button>
-          <button
-            className={`rh-auth-tab ${authModalTab === 'signup' ? 'active' : ''}`}
-            onClick={() => handleTabChange('signup')}
-            type="button"
-          >
-            Create Account
-          </button>
-          {authModalTab === 'admin' && (
-            <button className="rh-auth-tab active" type="button">
+          {authModalTab === 'admin' ? (
+            <button className="rh-auth-tab active" type="button" style={{ width: '100%' }}>
               Admin Login
             </button>
+          ) : (
+            <>
+              <button
+                className={`rh-auth-tab ${authModalTab === 'login' ? 'active' : ''}`}
+                onClick={() => handleTabChange('login')}
+                type="button"
+              >
+                Sign In
+              </button>
+              <button
+                className={`rh-auth-tab ${authModalTab === 'signup' ? 'active' : ''}`}
+                onClick={() => handleTabChange('signup')}
+                type="button"
+              >
+                Create Account
+              </button>
+            </>
           )}
         </div>
 
@@ -265,7 +285,7 @@ export default function AuthModal() {
                   <input
                     type="email"
                     className="rh-auth-input"
-                    placeholder="workatbuildcrew@gmail.com"
+                    placeholder="Enter Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -280,7 +300,7 @@ export default function AuthModal() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="rh-auth-input"
-                    placeholder="••••••••"
+                    placeholder="Enter Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -316,7 +336,7 @@ export default function AuthModal() {
                   <input
                     type="email"
                     className="rh-auth-input"
-                    placeholder="you@example.com"
+                    placeholder="Enter Email Address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -331,7 +351,7 @@ export default function AuthModal() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="rh-auth-input"
-                    placeholder="••••••••"
+                    placeholder="Enter Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -346,16 +366,9 @@ export default function AuthModal() {
                 </div>
               </div>
 
-              <div className="rh-auth-forgot" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className="rh-auth-forgot">
                 <button type="button" onClick={handleForgotPassword}>
                   Forgot password?
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTabChange('admin')}
-                  style={{ color: '#5C3D1E', fontWeight: 'bold', fontStyle: 'normal', textDecoration: 'underline' }}
-                >
-                  Admin Login
                 </button>
               </div>
 
@@ -367,6 +380,16 @@ export default function AuthModal() {
                 Don't have an account?{' '}
                 <button type="button" onClick={() => handleTabChange('signup')}>
                   Create One
+                </button>
+              </div>
+
+              <div className="rh-auth-switch" style={{ marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => handleTabChange('admin')}
+                  style={{ color: '#8B5E3C', fontStyle: 'italic', textDecoration: 'underline' }}
+                >
+                  🔐 Admin Login
                 </button>
               </div>
             </form>
@@ -381,7 +404,7 @@ export default function AuthModal() {
                   <input
                     type="text"
                     className="rh-auth-input"
-                    placeholder="e.g. Priya Ramesh"
+                    placeholder="Enter Full Name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     required
@@ -397,7 +420,7 @@ export default function AuthModal() {
                     <input
                       type="email"
                       className="rh-auth-input"
-                      placeholder="you@email.com"
+                      placeholder="Enter Email Address"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -412,7 +435,7 @@ export default function AuthModal() {
                     <input
                       type="tel"
                       className="rh-auth-input"
-                      placeholder="9876543210"
+                      placeholder="Enter Mobile Number"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                     />
@@ -427,7 +450,7 @@ export default function AuthModal() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="rh-auth-input"
-                    placeholder="Min 6 characters"
+                    placeholder="Enter Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -449,7 +472,7 @@ export default function AuthModal() {
                   <input
                     type={showConfirmPw ? 'text' : 'password'}
                     className="rh-auth-input"
-                    placeholder="Re-enter password"
+                    placeholder="Enter Confirm Password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required

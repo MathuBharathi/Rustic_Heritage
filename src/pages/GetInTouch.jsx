@@ -116,8 +116,8 @@ export default function GetInTouch() {
               >
                 <option value="">Select a product (optional)</option>
                 {PRODUCTS.map((p) => (
-                  <option key={p.id} value={`${p.emoji} ${p.name} – ₹${p.price}`}>
-                    {p.emoji} {p.name} – ₹{p.price}
+                  <option key={p.id} value={`${p.name} – ₹${p.price}`}>
+                    {p.name} – ₹{p.price}
                   </option>
                 ))}
               </select>

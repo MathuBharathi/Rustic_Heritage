@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { PRODUCTS } from './products';
 
 export async function validateCoupon(code, subtotal = 0) {
   if (!code || !code.trim()) {
@@ -46,7 +47,7 @@ export async function processOrderPayment({ cartItems, customer, paymentMethod, 
   const orderData = { items: cartItems };
 
   if (paymentMethod === 'cod') {
-    const newOrder = await processCODPayment({ orderData, customer, totals });
+    const newOrder = await processCODPayment({ orderData, customer, totals, appliedCoupon });
     return {
       orderId: newOrder.order_number || newOrder.id,
       customer,
@@ -59,6 +60,7 @@ export async function processOrderPayment({ cartItems, customer, paymentMethod, 
         orderData,
         customer,
         totals,
+        appliedCoupon,
         onSuccess: (newOrder) => {
           resolve({
             orderId: newOrder.order_number || newOrder.id,
@@ -78,6 +80,7 @@ export async function processRazorpayPayment({
   orderData,
   customer,
   totals,
+  appliedCoupon,
   onSuccess,
   onError,
 }) {
@@ -138,6 +141,7 @@ export async function processRazorpayPayment({
             paymentMethod: 'online',
             paymentId: response.razorpay_payment_id,
             paymentStatus: 'paid',
+            appliedCoupon,
           });
 
           onSuccess(newOrder);
@@ -159,13 +163,14 @@ export async function processRazorpayPayment({
   }
 }
 
-export async function processCODPayment({ orderData, customer, totals }) {
+export async function processCODPayment({ orderData, customer, totals, appliedCoupon }) {
   const newOrder = await saveOrderToDatabase({
     customer,
     itemsList: orderData.items,
     totals,
     paymentMethod: 'cod',
     paymentStatus: 'pending',
+    appliedCoupon,
   });
 
   return newOrder;
@@ -178,6 +183,7 @@ export async function saveOrderToDatabase({
   paymentMethod,
   paymentId = null,
   paymentStatus = 'pending',
+  appliedCoupon = null,
 }) {
   const { subtotal, deliveryFee, discountAmount, grandTotal, tax } = totals;
   const orderNum = 'RH-' + Math.floor(100000 + Math.random() * 900000);
@@ -201,8 +207,43 @@ export async function saveOrderToDatabase({
     console.warn('Session resolve notice:', authErr);
   }
 
-  const taxVal = tax !== undefined ? tax : Math.round(Number(subtotal || 0) * 0.05);
+  // Also store/update customer delivery address in addresses table if user profile exists
+  if (profileId && customer.address?.trim()) {
+    try {
+      const { data: existingAddr } = await supabase
+        .from('addresses')
+        .select('id')
+        .eq('user_id', profileId)
+        .maybeSingle();
 
+      const addrRecord = {
+        user_id: profileId,
+        receiver_name: customer.name.trim(),
+        phone: customer.phone?.trim() || null,
+        address_line1: customer.address.trim(),
+        city: customer.city?.trim() || 'Coimbatore',
+        state: customer.state || 'Tamil Nadu',
+        pincode: customer.pin?.trim() || '641001',
+        country: 'India',
+        is_default: true,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (existingAddr?.id) {
+        await supabase.from('addresses').update(addrRecord).eq('id', existingAddr.id);
+      } else {
+        await supabase.from('addresses').insert(addrRecord);
+      }
+    } catch (addrSaveErr) {
+      console.warn('Address table save error during checkout:', addrSaveErr);
+    }
+  }
+
+  const taxVal = tax !== undefined ? tax : Math.round(Number(subtotal || 0) * 0.05);
+  const couponIdVal = appliedCoupon?.coupon?.id || appliedCoupon?.id || null;
+  const couponCodeVal = appliedCoupon?.coupon?.code || appliedCoupon?.code || appliedCoupon?.coupon_code || null;
+
+  // Clean schema-compliant payload matching PostgreSQL orders table
   let payload = {
     order_number: orderNum,
     user_id: profileId,
@@ -210,40 +251,33 @@ export async function saveOrderToDatabase({
     customer_email: customer.email.trim().toLowerCase(),
     customer_phone: customer.phone.trim(),
     delivery_address: customer.address.trim(),
-    shipping_address: customer.address.trim(),
     city: customer.city.trim(),
-    delivery_city: customer.city.trim(),
-    shipping_city: customer.city.trim(),
     pincode: customer.pin.trim(),
-    delivery_pin: customer.pin.trim(),
-    shipping_pin: customer.pin.trim(),
     state: customer.state || 'Tamil Nadu',
-    delivery_state: customer.state || 'Tamil Nadu',
-    shipping_state: customer.state || 'Tamil Nadu',
-    delivery_country: 'India',
     subtotal: Number(subtotal || 0),
+    discount_amount: Number(discountAmount || 0),
     shipping_fee: Number(deliveryFee || 0),
     delivery_fee: Number(deliveryFee || 0),
-    delivery_charge: Number(deliveryFee || 0),
-    discount: Number(discountAmount || 0),
-    discount_amount: Number(discountAmount || 0),
-    gst: Number(taxVal || 0),
-    tax: Number(taxVal || 0),
     total_amount: Number(grandTotal || 0),
-    payment_method: paymentMethod,
-    payment_status: paymentStatus,
-    payment_id: paymentId,
-    razorpay_payment_id: paymentId,
+    payment_method: (paymentMethod || 'cod').toLowerCase(),
+    payment_status: paymentStatus || 'pending',
     order_status: 'pending',
     created_at: new Date().toISOString(),
   };
+
+  if (couponIdVal) {
+    payload.coupon_id = couponIdVal;
+  }
+  if (couponCodeVal) {
+    payload.coupon_code = couponCodeVal;
+  }
 
   let newOrder = null;
   let orderErr = null;
   let attempts = 0;
 
   // Self-healing retry loop: strips any property Supabase reports missing in its schema cache!
-  while (attempts < 6) {
+  while (attempts < 15) {
     attempts++;
     const res = await supabase.from('orders').insert(payload).select().single();
     if (!res.error) {
@@ -287,22 +321,85 @@ export async function saveOrderToDatabase({
     };
   }
 
-  // Insert items into order_items
-  if (newOrder.id && itemsList && itemsList.length > 0) {
+  // Insert items into order_items table
+  if (newOrder.id && itemsList) {
     try {
-      const orderItemsRecords = itemsList.map((item) => ({
-        order_id: newOrder.id,
-        product_id: typeof item.id === 'number' ? item.id : null,
-        title: item.name || item.title || 'Handcrafted Kitchenware Item',
-        price: Number(item.price || 0),
-        quantity: Number(item.qty || item.quantity || 1),
-        total_price: Number((item.price || 0) * (item.qty || item.quantity || 1)),
-        created_at: new Date().toISOString(),
-      }));
+      let formattedItems = [];
+      if (Array.isArray(itemsList)) {
+        formattedItems = itemsList;
+      } else if (typeof itemsList === 'object') {
+        // Map dictionary format { productId: qty } to item objects using PRODUCTS catalog
+        formattedItems = Object.keys(itemsList).map((idStr) => {
+          const pId = Number(idStr);
+          const prod = PRODUCTS.find((p) => p.id === pId);
+          const qty = Number(itemsList[idStr] || 1);
+          return {
+            id: pId,
+            product_id: pId,
+            title: prod ? prod.product_name || prod.name : `Handcrafted Kitchenware #${pId}`,
+            price: prod ? Number(prod.price || 0) : 0,
+            quantity: qty,
+            total_price: prod ? Number(prod.price || 0) * qty : 0,
+          };
+        });
+      }
 
-      await supabase.from('order_items').insert(orderItemsRecords);
+      if (formattedItems.length > 0) {
+        const orderItemsRecords = formattedItems.map((item) => ({
+          order_id: newOrder.id,
+          product_id: typeof item.id === 'number' ? item.id : (typeof item.product_id === 'number' ? item.product_id : null),
+          title: item.title || item.name || 'Handcrafted Kitchenware Item',
+          price: Number(item.price || 0),
+          quantity: Number(item.qty || item.quantity || 1),
+          total_price: Number(item.total_price || (item.price || 0) * (item.qty || item.quantity || 1)),
+          created_at: new Date().toISOString(),
+        }));
+
+        const { error: itemsInsErr } = await supabase.from('order_items').insert(orderItemsRecords);
+        if (itemsInsErr) {
+          console.warn('Supabase order_items insert error:', itemsInsErr);
+        }
+      }
     } catch (itemsErr) {
       console.warn('Could not insert detailed order_items:', itemsErr);
+    }
+  }
+
+  // Record Coupon Usage & Deactivate Single-Use Coupon
+  if (couponIdVal && newOrder.id && !newOrder.id.startsWith('rh_ord_')) {
+    try {
+      // 1. Insert into coupon_usage table
+      await supabase.from('coupon_usage').insert({
+        coupon_id: couponIdVal,
+        coupon_code: couponCodeVal,
+        user_id: profileId || null,
+        user_name: customer.name.trim(),
+        order_id: newOrder.id,
+        used_at: new Date().toISOString(),
+      });
+
+      // 2. Fetch coupon record to increment used_count and deactivate if usage_limit reached
+      const { data: cRecord } = await supabase
+        .from('coupons')
+        .select('used_count, usage_limit')
+        .eq('id', couponIdVal)
+        .maybeSingle();
+
+      if (cRecord) {
+        const updatedUsedCount = (cRecord.used_count || 0) + 1;
+        const isLimitReached = cRecord.usage_limit && updatedUsedCount >= cRecord.usage_limit;
+
+        await supabase
+          .from('coupons')
+          .update({
+            used_count: updatedUsedCount,
+            active: isLimitReached ? false : true,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', couponIdVal);
+      }
+    } catch (couponUsageErr) {
+      console.warn('Coupon usage tracking notice:', couponUsageErr);
     }
   }
 

@@ -24,7 +24,7 @@ export default function ProductDetailModal({ product, onClose }) {
         <div className="pm-header">
           <div>
             <div className="pm-title">
-              {product.emoji} {product.name}
+              {product.name}
             </div>
             <div className="pm-subtitle">✦ AUTHENTIC KITCHENWARE SPECIFICATIONS ✦</div>
           </div>

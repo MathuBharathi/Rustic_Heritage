@@ -37,14 +37,44 @@ export async function submitReview({ reviewerName, city, productName, rating, re
   return data;
 }
 
-export async function toggleReviewApproval(reviewId, currentApproved) {
-  const { data, error } = await supabase
-    .from('reviews')
-    .update({ approved: !currentApproved })
-    .eq('id', reviewId)
-    .select()
-    .single();
+export async function toggleReviewApproval(reviewId, currentApproved, explicitTarget) {
+  const newApprovedState = explicitTarget ? explicitTarget === 'approved' : !currentApproved;
+  const newStatus = newApprovedState ? 'approved' : 'hidden';
 
-  if (error) throw error;
-  return data;
+  // 1. Try updating both approved and status
+  let res = await supabase
+    .from('reviews')
+    .update({ approved: newApprovedState, status: newStatus })
+    .eq('id', reviewId)
+    .select();
+
+  if (!res.error && res.data && res.data.length > 0) return res.data[0];
+
+  // 2. Try status column
+  res = await supabase
+    .from('reviews')
+    .update({ status: newStatus })
+    .eq('id', reviewId)
+    .select();
+
+  if (!res.error && res.data && res.data.length > 0) return res.data[0];
+
+  // 3. Try approved column
+  res = await supabase
+    .from('reviews')
+    .update({ approved: newApprovedState })
+    .eq('id', reviewId)
+    .select();
+
+  if (!res.error && res.data && res.data.length > 0) return res.data[0];
+
+  // 4. Try is_approved column
+  res = await supabase
+    .from('reviews')
+    .update({ is_approved: newApprovedState })
+    .eq('id', reviewId)
+    .select();
+
+  if (res.error) throw res.error;
+  return res.data?.[0];
 }

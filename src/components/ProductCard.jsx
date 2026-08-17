@@ -19,7 +19,7 @@ export default function ProductCard({ product, onSelectProduct }) {
       <img src={product.img || `images/img${product.id || 1}.png`} alt={product.name || 'Product'} />
       <div className="product-card-body">
         <h3>
-          {product.emoji || '🏺'} {product.name || 'Kitchenware Item'}
+          {product.name || 'Kitchenware Item'}
         </h3>
         <p className="price">
           ₹{priceVal}{' '}

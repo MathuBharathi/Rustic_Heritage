@@ -236,7 +236,7 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_is_admin BOOLEAN := FALSE;
 BEGIN
-  IF LOWER(NEW.email) = 'mathubharathi15@gmail.com' THEN
+  IF LOWER(NEW.email) = 'workatbuildcrew@gmail.com' THEN
     v_is_admin := TRUE;
   END IF;
 

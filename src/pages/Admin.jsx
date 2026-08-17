@@ -6,11 +6,13 @@ import { Link } from 'react-router-dom';
 import AdminLayout from '../admin/AdminLayout';
 import AdminDashboard from '../admin/AdminDashboard';
 import AdminOrders from '../admin/AdminOrders';
+import AdminPendingOrders from '../admin/AdminPendingOrders';
 import AdminProducts from '../admin/AdminProducts';
 import AdminReviews from '../admin/AdminReviews';
 import AdminEnquiries from '../admin/AdminEnquiries';
 import AdminSubscribers from '../admin/AdminSubscribers';
 import AdminCoupons from '../admin/AdminCoupons';
+import AdminUsers from '../admin/AdminUsers';
 import { PRODUCTS } from '../services/products';
 import { fetchAllOrders, updateOrderStatus } from '../services/orders';
 import { fetchAllReviews, toggleReviewApproval } from '../services/reviews';
@@ -36,6 +38,7 @@ export default function Admin() {
   const [enquiries, setEnquiries] = useState([]);
   const [subscribers, setSubscribers] = useState([]);
   const [coupons, setCoupons] = useState([]);
+  const [users, setUsers] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
 
   // Modals & Drawers
@@ -72,6 +75,9 @@ export default function Admin() {
 
       const { data: productsData } = await supabase.from('products').select('*').order('id', { ascending: true });
       if (productsData && productsData.length > 0) setProducts(productsData);
+
+      const { data: usersData } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+      if (usersData) setUsers(usersData);
     } catch (err) {
       console.warn('Admin data load notice:', err);
     } finally {
@@ -103,20 +109,25 @@ export default function Admin() {
     try {
       await updateOrderStatus(orderId, newStatus);
       setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, order_status: newStatus } : o)));
-      if (selectedOrderDrawer?.id === orderId) {
-        setSelectedOrderDrawer((prev) => ({ ...prev, order_status: newStatus }));
-      }
+      setSelectedOrderDrawer(null); // Auto-close modal popup after changing status!
       showActionMsg(`✅ Order #${orderId} status updated to ${newStatus}`);
     } catch (err) {
       alert(`Error updating order: ${err.message}`);
     }
   };
 
-  const handleToggleReviewApprove = async (reviewId, currentApproved) => {
+  const handleToggleReviewApprove = async (reviewId, currentApproved, explicitTarget) => {
     try {
-      await toggleReviewApproval(reviewId, currentApproved);
-      setReviews((prev) => prev.map((r) => (r.id === reviewId ? { ...r, approved: !currentApproved } : r)));
-      showActionMsg(`✅ Review ${!currentApproved ? 'approved' : 'hidden'}`);
+      const targetApproved = explicitTarget ? explicitTarget === 'approved' : !currentApproved;
+      await toggleReviewApproval(reviewId, currentApproved, explicitTarget);
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === reviewId
+            ? { ...r, approved: targetApproved, status: targetApproved ? 'approved' : 'hidden' }
+            : r
+        )
+      );
+      showActionMsg(`✅ Review status set to ${targetApproved ? 'Approved' : 'Hidden'}`);
     } catch (err) {
       alert(`Error updating review: ${err.message}`);
     }
@@ -175,6 +186,38 @@ export default function Admin() {
     }
   };
 
+  const handleToggleCouponActive = async (couponId, newActiveState) => {
+    try {
+      const { error } = await supabase
+        .from('coupons')
+        .update({ active: newActiveState, updated_at: new Date().toISOString() })
+        .eq('id', couponId);
+
+      if (error) throw error;
+
+      setCoupons((prev) =>
+        prev.map((c) => (c.id === couponId ? { ...c, active: newActiveState } : c))
+      );
+      showActionMsg(`✅ Coupon status updated to ${newActiveState ? 'Active' : 'Disabled'}`);
+    } catch (err) {
+      alert(`Error updating coupon: ${err.message}`);
+    }
+  };
+
+  const handleDeleteCoupon = async (couponId, couponCode) => {
+    if (!window.confirm(`Are you sure you want to delete coupon ${couponCode}?`)) return;
+
+    try {
+      const { error } = await supabase.from('coupons').delete().eq('id', couponId);
+      if (error) throw error;
+
+      setCoupons((prev) => prev.filter((c) => c.id !== couponId));
+      showActionMsg(`🗑️ Coupon ${couponCode} deleted successfully`);
+    } catch (err) {
+      alert(`Error deleting coupon: ${err.message}`);
+    }
+  };
+
   const showActionMsg = (msg) => {
     setActionMsg(msg);
     setTimeout(() => setActionMsg(null), 3500);
@@ -196,7 +239,7 @@ export default function Admin() {
                 <input
                   type="email"
                   required
-                  placeholder="mathubharathi15@gmail.com"
+                  placeholder="Enter Admin Email"
                   value={adminEmail}
                   onChange={(e) => setAdminEmail(e.target.value)}
                 />
@@ -206,7 +249,7 @@ export default function Admin() {
                 <input
                   type="password"
                   required
-                  placeholder="••••••••"
+                  placeholder="Enter Password"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                 />
@@ -224,6 +267,10 @@ export default function Admin() {
     );
   }
 
+  const pendingOrdersCount = orders.filter(
+    (o) => (o.order_status || 'pending').toLowerCase() === 'pending'
+  ).length;
+
   return (
     <AdminLayout
       user={user}
@@ -237,6 +284,8 @@ export default function Admin() {
       enquiriesCount={enquiries.length}
       subscribersCount={subscribers.length}
       couponsCount={coupons.length}
+      usersCount={users.length}
+      pendingOrdersCount={pendingOrdersCount}
     >
       {activeTab === 'dashboard' && (
         <AdminDashboard
@@ -244,16 +293,21 @@ export default function Admin() {
           products={products}
           subscribers={subscribers}
           reviews={reviews}
+          users={users}
           onNavigateOrders={() => setActiveTab('orders')}
         />
+      )}
+
+      {activeTab === 'users' && (
+        <AdminUsers users={users} />
       )}
 
       {activeTab === 'orders' && (
         <AdminOrders orders={orders} onSelectOrder={setSelectedOrderDrawer} />
       )}
 
-      {activeTab === 'products' && (
-        <AdminProducts products={products} />
+      {activeTab === 'pending_orders' && (
+        <AdminPendingOrders orders={orders} onSelectOrder={setSelectedOrderDrawer} />
       )}
 
       {activeTab === 'reviews' && (
@@ -269,38 +323,89 @@ export default function Admin() {
       )}
 
       {activeTab === 'coupons' && (
-        <AdminCoupons coupons={coupons} onCreateClick={() => setCouponModal(true)} />
+        <AdminCoupons
+          coupons={coupons}
+          onCreateClick={() => setCouponModal(true)}
+          onToggleActive={handleToggleCouponActive}
+          onDeleteCoupon={handleDeleteCoupon}
+        />
       )}
 
       {/* ORDER DETAILS DRAWER */}
+      {/* ORDER DETAILS POPUP MODAL */}
       {selectedOrderDrawer && (
-        <div className="admin-drawer open">
-          <div className="drawer-header">
-            <div>
-              <h3 style={{ margin: 0 }}>Order #{selectedOrderDrawer.id}</h3>
-              <div style={{ fontSize: '11px', color: '#C49A6C' }}>Customer Details &amp; Status Update</div>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 4000,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            backdropFilter: 'blur(3px)',
+          }}
+          onClick={() => setSelectedOrderDrawer(null)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              maxWidth: '560px',
+              width: '100%',
+              borderRadius: '12px',
+              padding: '28px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              border: '2px solid #5C3D1E',
+              color: '#3B2A1A',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #5C3D1E', paddingBottom: '14px', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#5C3D1E', fontSize: '18px', fontFamily: 'Georgia, serif' }}>
+                  Order #{String(selectedOrderDrawer.order_number || selectedOrderDrawer.id).slice(0, 18)}
+                </h3>
+                <div style={{ fontSize: '11px', color: '#C49A6C', textTransform: 'uppercase', letterSpacing: '1px' }}>Customer Details &amp; Status Update</div>
+              </div>
+              <button
+                onClick={() => setSelectedOrderDrawer(null)}
+                style={{
+                  background: '#F5ECD7',
+                  border: '1px solid #C49A6C',
+                  color: '#5C3D1E',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                }}
+                type="button"
+              >
+                ✕
+              </button>
             </div>
-            <button className="drawer-close-btn" onClick={() => setSelectedOrderDrawer(null)} type="button">
-              ✕
-            </button>
-          </div>
-          <div className="drawer-body">
+
             <div style={{ marginBottom: '20px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#8B5E3C', textTransform: 'uppercase' }}>Update Order Status</label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#8B5E3C', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Update Order Status</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {['pending', 'confirmed', 'delivered', 'cancelled'].map((st) => (
                   <button
                     key={st}
                     onClick={() => handleUpdateOrderStatus(selectedOrderDrawer.id, st)}
                     style={{
-                      padding: '6px 14px',
+                      padding: '8px 16px',
                       borderRadius: '20px',
                       border: 'none',
                       fontSize: '12px',
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      background: selectedOrderDrawer.order_status === st ? '#3B2A1A' : '#E8D5B7',
-                      color: selectedOrderDrawer.order_status === st ? '#F5ECD7' : '#3B2A1A',
+                      background: selectedOrderDrawer.order_status === st ? '#5C3D1E' : '#F5ECD7',
+                      color: selectedOrderDrawer.order_status === st ? '#F5ECD7' : '#5C3D1E',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
                     }}
                     type="button"
                   >
@@ -310,53 +415,99 @@ export default function Admin() {
               </div>
             </div>
 
-            <div style={{ background: '#F5ECD7', padding: '16px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px' }}>
+            <div style={{ background: '#FDF6EC', padding: '16px', borderRadius: '8px', marginBottom: '20px', fontSize: '13px', border: '1px solid #E8D5B7' }}>
               <div><strong>Customer:</strong> {selectedOrderDrawer.customer_name}</div>
               <div><strong>Email:</strong> {selectedOrderDrawer.customer_email}</div>
-              <div><strong>Phone:</strong> {selectedOrderDrawer.customer_phone}</div>
-              <div><strong>Address:</strong> {selectedOrderDrawer.shipping_address}, {selectedOrderDrawer.shipping_city} - {selectedOrderDrawer.shipping_pin}</div>
+              <div><strong>Phone:</strong> {selectedOrderDrawer.customer_phone || selectedOrderDrawer.phone || 'N/A'}</div>
+              <div>
+                <strong>Delivery Address:</strong> {selectedOrderDrawer.delivery_address || selectedOrderDrawer.shipping_address || 'Address Not Provided'}
+                {selectedOrderDrawer.city || selectedOrderDrawer.shipping_city ? `, ${selectedOrderDrawer.city || selectedOrderDrawer.shipping_city}` : ''}
+                {selectedOrderDrawer.pincode || selectedOrderDrawer.shipping_pin ? ` - ${selectedOrderDrawer.pincode || selectedOrderDrawer.shipping_pin}` : ''}
+              </div>
             </div>
 
-            <h4 style={{ color: '#5C3D1E', marginBottom: '10px' }}>Order Items</h4>
+            <h4 style={{ color: '#5C3D1E', marginBottom: '10px', fontSize: '15px' }}>Order Items</h4>
             {selectedOrderDrawer.items && selectedOrderDrawer.items.length > 0 ? (
               selectedOrderDrawer.items.map((it, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #E8D5B7', fontSize: '13px' }}>
-                  <span>{it.product_name} × {it.quantity}</span>
-                  <strong>₹{it.total_price}</strong>
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px dashed #E8D5B7', fontSize: '13.5px' }}>
+                  <span>{it.title || it.product_name || 'Handcrafted Kitchenware Item'} × {it.quantity}</span>
+                  <strong>₹{it.total_price || (it.price * it.quantity)}</strong>
                 </div>
               ))
             ) : (
-              <div style={{ fontSize: '13px', color: '#8B5E3C' }}>1x Kitchenware Product Item</div>
+              <div style={{ fontSize: '13px', color: '#8B5E3C' }}>1x Kitchenware Item</div>
             )}
 
-            <div style={{ marginTop: '20px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold', color: '#3B2A1A' }}>
+            <div style={{ marginTop: '20px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold', color: '#5C3D1E' }}>
               Total: ₹{selectedOrderDrawer.total_amount?.toLocaleString('en-IN')}
             </div>
           </div>
         </div>
       )}
 
-      {/* ENQUIRY DETAILS DRAWER */}
+      {/* ENQUIRY DETAILS POPUP MODAL */}
       {selectedEnquiryDrawer && (
-        <div className="admin-drawer open">
-          <div className="drawer-header">
-            <div>
-              <h3 style={{ margin: 0 }}>Enquiry Details</h3>
-              <div style={{ fontSize: '11px', color: '#C49A6C' }}>From {selectedEnquiryDrawer.name}</div>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 4000,
+            background: 'rgba(0,0,0,0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            backdropFilter: 'blur(3px)',
+          }}
+          onClick={() => setSelectedEnquiryDrawer(null)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              maxWidth: '560px',
+              width: '100%',
+              borderRadius: '12px',
+              padding: '28px',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              border: '2px solid #5C3D1E',
+              color: '#3B2A1A',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #5C3D1E', paddingBottom: '14px', marginBottom: '20px' }}>
+              <div>
+                <h3 style={{ margin: 0, color: '#5C3D1E', fontSize: '18px', fontFamily: 'Georgia, serif' }}>Enquiry Details</h3>
+                <div style={{ fontSize: '11px', color: '#C49A6C' }}>From {selectedEnquiryDrawer.name}</div>
+              </div>
+              <button
+                onClick={() => setSelectedEnquiryDrawer(null)}
+                style={{
+                  background: '#F5ECD7',
+                  border: '1px solid #C49A6C',
+                  color: '#5C3D1E',
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                }}
+                type="button"
+              >
+                ✕
+              </button>
             </div>
-            <button className="drawer-close-btn" onClick={() => setSelectedEnquiryDrawer(null)} type="button">
-              ✕
-            </button>
-          </div>
-          <div className="drawer-body">
-            <div style={{ fontSize: '13px', color: '#3B2A1A', marginBottom: '16px' }}>
+
+            <div style={{ fontSize: '13px', color: '#3B2A1A', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <div><strong>Name:</strong> {selectedEnquiryDrawer.name}</div>
               <div><strong>Email:</strong> {selectedEnquiryDrawer.email}</div>
               <div><strong>Subject:</strong> {selectedEnquiryDrawer.subject}</div>
               <div><strong>Product Interest:</strong> {selectedEnquiryDrawer.product_interest || 'N/A'}</div>
             </div>
 
-            <div className="enquiry-modal-box">
+            <div style={{ background: '#FDF6EC', border: '1px solid #E8D5B7', padding: '16px', borderRadius: '8px', marginBottom: '20px', fontSize: '13.5px', color: '#3B2A1A' }}>
               <strong style={{ color: '#5C3D1E', display: 'block', marginBottom: '6px' }}>Message:</strong>
               {selectedEnquiryDrawer.message}
             </div>

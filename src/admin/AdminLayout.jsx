@@ -13,6 +13,8 @@ export default function AdminLayout({
   enquiriesCount,
   subscribersCount,
   couponsCount,
+  usersCount = 0,
+  pendingOrdersCount = 0,
   children,
 }) {
   return (
@@ -107,6 +109,31 @@ export default function AdminLayout({
 
           <button
             type="button"
+            onClick={() => setActiveTab('users')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              width: '100%',
+              padding: '12px 14px',
+              borderRadius: '6px',
+              fontSize: '13.5px',
+              fontFamily: "'Georgia', serif",
+              cursor: 'pointer',
+              border: 'none',
+              textAlign: 'left',
+              background: activeTab === 'users' ? '#5C3D1E' : 'transparent',
+              color: activeTab === 'users' ? '#F5ECD7' : '#E8D5B7',
+              fontWeight: activeTab === 'users' ? 'bold' : 'normal',
+              boxShadow: activeTab === 'users' ? '0 2px 8px rgba(0,0,0,0.25)' : 'none',
+              transition: 'all 0.2s',
+            }}
+          >
+            👥 Registered Users ({usersCount})
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('orders')}
             style={{
               display: 'flex',
@@ -132,7 +159,7 @@ export default function AdminLayout({
 
           <button
             type="button"
-            onClick={() => setActiveTab('products')}
+            onClick={() => setActiveTab('pending_orders')}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -145,14 +172,14 @@ export default function AdminLayout({
               cursor: 'pointer',
               border: 'none',
               textAlign: 'left',
-              background: activeTab === 'products' ? '#5C3D1E' : 'transparent',
-              color: activeTab === 'products' ? '#F5ECD7' : '#E8D5B7',
-              fontWeight: activeTab === 'products' ? 'bold' : 'normal',
-              boxShadow: activeTab === 'products' ? '0 2px 8px rgba(0,0,0,0.25)' : 'none',
+              background: activeTab === 'pending_orders' ? '#5C3D1E' : 'transparent',
+              color: activeTab === 'pending_orders' ? '#F5ECD7' : '#E8D5B7',
+              fontWeight: activeTab === 'pending_orders' ? 'bold' : 'normal',
+              boxShadow: activeTab === 'pending_orders' ? '0 2px 8px rgba(0,0,0,0.25)' : 'none',
               transition: 'all 0.2s',
             }}
           >
-            🏺 Products Catalogue
+            ⏳ Pending Orders ({pendingOrdersCount})
           </button>
 
           <button

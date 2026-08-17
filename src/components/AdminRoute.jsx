@@ -2,6 +2,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
+const ADMIN_EMAILS = ['workatbuildcrew@gmail.com', 'mathubharathi15@gmail.com'];
+
 export default function AdminRoute({ children }) {
   const { user, profile, loading } = useAuth();
 
@@ -16,9 +18,10 @@ export default function AdminRoute({ children }) {
     );
   }
 
+  const userEmail = (user?.email || '').toLowerCase();
   const isVerifiedAdmin =
     !!user &&
-    (profile?.is_admin === true || (user.email || '').toLowerCase() === 'mathubharathi15@gmail.com');
+    (profile?.is_admin === true || ADMIN_EMAILS.includes(userEmail));
 
   if (!isVerifiedAdmin) {
     return <Navigate to="/" replace />;

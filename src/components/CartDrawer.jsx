@@ -76,6 +76,7 @@ export default function CartDrawer() {
       onClick={closeCartDrawer}
     >
       <div
+        className="rh-no-scrollbar"
         style={{
           width: '100%',
           maxWidth: '460px',
@@ -130,7 +131,7 @@ export default function CartDrawer() {
 
 
         {/* Drawer Body - Items List */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div className="rh-no-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {itemCount === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: '#8B5E3C' }}>
               <div style={{ fontSize: '54px', marginBottom: '16px' }}>🏺</div>
@@ -182,7 +183,7 @@ export default function CartDrawer() {
                           textOverflow: 'ellipsis',
                         }}
                       >
-                        {p.emoji} {p.name}
+                        {p.name}
                       </h4>
                       <div style={{ fontSize: '15px', fontWeight: 'bold', color: '#8B5E3C', marginBottom: '8px' }}>
                         ₹{p.price}

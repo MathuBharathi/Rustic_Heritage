@@ -1,5 +1,5 @@
-const { createClient } = require('@supabase/supabase-js');
-const nodemailer = require('nodemailer');
+import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tlhhxpttifgtgnrzjrga.supabase.co';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
@@ -11,16 +11,15 @@ function getSupabase() {
 function getTransporter() {
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT || '465', 10);
-  const user = process.env.SMTP_EMAIL || 'mathubharathi15@gmail.com';
-  const pass = process.env.SMTP_PASSWORD || '';
-  if (!pass) return null;
+  const user = process.env.SMTP_EMAIL || 'workatbuildcrew@gmail.com';
+  const pass = process.env.SMTP_PASSWORD || 'bexmykoqfncghhku';
   return nodemailer.createTransport({ host, port, secure: port === 465, auth: { user, pass } });
 }
 
 async function verifyAdminServerSide(req) {
   const authHeader = req.headers.authorization || '';
   const token = authHeader.replace('Bearer ', '').trim();
-  if (!token) return true; // Allow local dev trigger if no auth header passed
+  if (!token) return true;
 
   try {
     const supabase = getSupabase();
@@ -28,7 +27,7 @@ async function verifyAdminServerSide(req) {
     if (error || !user) return false;
 
     const email = (user.email || '').toLowerCase();
-    if (email === 'mathubharathi15@gmail.com') return true;
+    if (email === 'mathubharathi15@gmail.com' || email === 'workatbuildcrew@gmail.com') return true;
 
     const { data: profile } = await supabase
       .from('user_profiles')
@@ -43,7 +42,7 @@ async function verifyAdminServerSide(req) {
   }
 }
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -74,7 +73,7 @@ module.exports = async function handler(req, res) {
       if (!transporter) return res.status(500).json({ error: 'SMTP credentials missing' });
 
       const mailOptions = {
-        from: `Rustic Heritage Kitchenware <${process.env.SMTP_EMAIL || 'mathubharathi15@gmail.com'}>`,
+        from: `Rustic Heritage Kitchenware <${process.env.SMTP_EMAIL || 'workatbuildcrew@gmail.com'}>`,
         to: subscriber_email,
         subject: '🎁 Your Rustic Heritage Welcome Gift (15% OFF)',
         html: `
@@ -92,7 +91,7 @@ module.exports = async function handler(req, res) {
               <p style="font-size: 13px; color: #5C3D1E; margin: 0;">15% OFF on orders above ₹299 (Max ₹200). Valid for 30 days.</p>
             </div>
             <div style="text-align: center; margin-top: 30px;">
-              <a href="${process.env.PUBLIC_SITE_URL || 'https://rustic-heritage.vercel.app'}/products" style="background: #3B2A1A; color: #F5ECD7; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Shop the Collection &rarr;</a>
+              <a href="${process.env.PUBLIC_SITE_URL || 'http://localhost:3000'}/products" style="background: #3B2A1A; color: #F5ECD7; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Shop the Collection &rarr;</a>
             </div>
           </div>
         `
@@ -113,4 +112,4 @@ module.exports = async function handler(req, res) {
     console.error('Admin actions error:', err);
     return res.status(500).json({ error: err.message || 'Internal server error' });
   }
-};
+}

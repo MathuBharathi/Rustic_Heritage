@@ -60,5 +60,21 @@ export async function updateOrderStatus(orderId, newStatus) {
     .single();
 
   if (error) throw error;
+
+  // Trigger order status update email to customer (confirmed, delivered, cancelled)
+  if (data && data.customer_email) {
+    fetch('/api/send-order-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        order_id: data.id,
+        order_number: data.order_number || data.id,
+        customer_name: data.customer_name,
+        customer_email: data.customer_email,
+        status: newStatus,
+      }),
+    }).catch((e) => console.warn('Order status email trigger notice:', e));
+  }
+
   return data;
 }
