@@ -127,7 +127,7 @@ export async function processRazorpayPayment({
     const rzpOrder = await response.json();
 
     const options = {
-      key: rzpOrder.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TQJzZBn7rHectv',
+      key: rzpOrder.key_id || (import.meta.env && import.meta.env.VITE_RAZORPAY_KEY_ID) || '',
       amount: rzpOrder.amount,
       currency: rzpOrder.currency || 'INR',
       name: 'Rustic Heritage Kitchenware',
