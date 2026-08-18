@@ -5,11 +5,11 @@ Rustic Heritage Kitchenware — Server
 - Run: python server.py
 """
 
-import http.server, socketserver, os, sys, json, base64, hmac, hashlib, time
-import urllib.request, urllib.error, smtplib, ssl
-from email.mime.text import MIMEText
+import os
+import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
-from urllib.parse import urlparse
+from email.mime.text import MIMEText
 
 # ══════════════════════════════════════════════════════
 #   ★ ENVIRONMENT CONFIGURATION ★
@@ -54,7 +54,7 @@ def send_email_smtp(to_email, subject, html):
             s.sendmail(SMTP_EMAIL, to_email, msg.as_string())
         print(f"  ✅ Email sent (SSL:465) → {to_email} | {subject[:50]}")
         return True
-    except Exception as e1:
+    except (smtplib.SMTPException, OSError) as e1:
         print(f"  ⚠  SSL failed ({e1}), trying TLS:587…")
 
     try:
@@ -65,6 +65,6 @@ def send_email_smtp(to_email, subject, html):
             s.sendmail(SMTP_EMAIL, to_email, msg.as_string())
         print(f"  ✅ Email sent (TLS:587) → {to_email} | {subject[:50]}")
         return True
-    except Exception as e2:
+    except (smtplib.SMTPException, OSError) as e2:
         print(f"  ✗  Email failed: {e2}")
-        return False
+        return False
