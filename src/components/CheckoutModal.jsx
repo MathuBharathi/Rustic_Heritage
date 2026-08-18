@@ -412,7 +412,7 @@ export default function CheckoutModal() {
                   <input
                     type="text"
                     required
-                    placeholder="Coimbatore"
+                    placeholder="e.g. Chennai"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     style={{
@@ -434,7 +434,7 @@ export default function CheckoutModal() {
                   <input
                     type="text"
                     required
-                    placeholder="641001"
+                    placeholder="e.g. 600001"
                     value={pin}
                     onChange={(e) => setPin(e.target.value)}
                     style={{

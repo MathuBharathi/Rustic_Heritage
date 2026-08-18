@@ -1,6 +1,7 @@
 import Razorpay from 'razorpay';
+import { createHandler } from './_adapter.js';
 
-export default async function handler(req, res) {
+export const handler = createHandler(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,8 +16,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid amount' });
     }
 
-    const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_live_TQJzZBn7rHectv';
-    const key_secret = process.env.RAZORPAY_KEY_SECRET || 'o1NNZ9TUz7JulvqSOCrX2Kzr';
+    const key_id = process.env.RAZORPAY_KEY_ID;
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!key_id || !key_secret) {
+      return res.status(500).json({ error: 'Razorpay environment variables missing.' });
+    }
 
     const razorpay = new Razorpay({
       key_id,
@@ -45,4 +50,6 @@ export default async function handler(req, res) {
     console.error('Razorpay Create Order Error:', err);
     return res.status(500).json({ error: err.message || 'Failed to create Razorpay order' });
   }
-}
+});
+
+export default handler;

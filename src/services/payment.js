@@ -76,6 +76,25 @@ export async function processOrderPayment({ cartItems, customer, paymentMethod, 
   }
 }
 
+export function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    if (typeof document !== 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    } else {
+      resolve(false);
+    }
+  });
+}
+
 export async function processRazorpayPayment({
   orderData,
   customer,
@@ -85,6 +104,11 @@ export async function processRazorpayPayment({
   onError,
 }) {
   try {
+    const isLoaded = await loadRazorpayScript();
+    if (!isLoaded || !window.Razorpay) {
+      throw new Error('Razorpay SDK failed to load. Please check your internet connection.');
+    }
+
     const response = await fetch('/api/create-razorpay-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,13 +120,14 @@ export async function processRazorpayPayment({
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create Razorpay payment order on server.');
+      const errRes = await response.json().catch(() => ({}));
+      throw new Error(errRes.error || 'Failed to create Razorpay payment order on server.');
     }
 
     const rzpOrder = await response.json();
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_RH_mock_key',
+      key: rzpOrder.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_live_TQJzZBn7rHectv',
       amount: rzpOrder.amount,
       currency: rzpOrder.currency || 'INR',
       name: 'Rustic Heritage Kitchenware',
@@ -405,19 +430,33 @@ export async function saveOrderToDatabase({
 
   // Send email notification via API (async non-blocking)
   try {
+    const emailPayload = {
+      order_id: newOrder.id,
+      order_number: newOrder.order_number,
+      customer_name: customer.name,
+      customer_email: customer.email,
+      customer_phone: customer.phone,
+      delivery_address: customer.address,
+      city: customer.city,
+      pincode: customer.pin,
+      total_amount: grandTotal,
+      subtotal: subtotal,
+      delivery_fee: deliveryFee,
+      discount_amount: discountAmount,
+      payment_method: paymentMethod,
+      items: typeof formattedItems !== 'undefined' && formattedItems.length > 0 ? formattedItems : itemsList,
+    };
+
     fetch('/api/send-order-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        order_id: newOrder.id,
-        order_number: newOrder.order_number,
-        customer_name: customer.name,
-        customer_email: customer.email,
-        total_amount: grandTotal,
-        payment_method: paymentMethod,
-        items: itemsList,
-      }),
-    }).catch((e) => console.warn('Email trigger warning:', e));
+      body: JSON.stringify(emailPayload),
+    })
+      .then(async (r) => {
+        const resData = await r.json().catch(() => ({}));
+        console.log('Order Email Dispatch Result:', r.status, resData);
+      })
+      .catch((e) => console.warn('Email trigger warning:', e));
   } catch (emailErr) {
     console.warn('Email API call error:', emailErr);
   }

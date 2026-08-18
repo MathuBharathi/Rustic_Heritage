@@ -1,6 +1,7 @@
 import crypto from 'crypto';
+import { createHandler } from './_adapter.js';
 
-export default async function handler(req, res) {
+export const handler = createHandler(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,7 +16,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required Razorpay verification parameters' });
     }
 
-    const key_secret = process.env.RAZORPAY_KEY_SECRET || 'o1NNZ9TUz7JulvqSOCrX2Kzr';
+    const key_secret = process.env.RAZORPAY_KEY_SECRET;
+    if (!key_secret) {
+      return res.status(500).json({ error: 'RAZORPAY_KEY_SECRET environment variable missing.' });
+    }
 
     const hmac = crypto.createHmac('sha256', key_secret);
     hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
@@ -31,4 +35,6 @@ export default async function handler(req, res) {
     console.error('Razorpay Verify Signature Error:', err);
     return res.status(500).json({ error: err.message || 'Signature verification failed' });
   }
-}
+});
+
+export default handler;

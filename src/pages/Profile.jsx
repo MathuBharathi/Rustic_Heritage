@@ -375,7 +375,7 @@ export default function Profile() {
                   <label>City</label>
                   <input
                     type="text"
-                    placeholder="Coimbatore"
+                    placeholder="e.g. Chennai"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                   />
@@ -384,7 +384,7 @@ export default function Profile() {
                   <label>Pincode</label>
                   <input
                     type="text"
-                    placeholder="641001"
+                    placeholder="e.g. 600001"
                     value={pin}
                     onChange={(e) => setPin(e.target.value)}
                   />
@@ -395,7 +395,7 @@ export default function Profile() {
                 <label>State</label>
                 <input
                   type="text"
-                  placeholder="Tamil Nadu"
+                  placeholder="e.g. Tamil Nadu"
                   value={state}
                   onChange={(e) => setState(e.target.value)}
                 />
